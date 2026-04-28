@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HP-11C</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.wrapper {
+  --cw: clamp(390px, min(67vw, calc(90vh * 13 / 8)), 782px);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* ── Calculator — ratio 13:8 ── */
+.calculator {
+  width: var(--cw);
+  aspect-ratio: 13 / 8;
+  background: linear-gradient(160deg, #1c1c1c 0%, #2e2e2e 50%, #1c1c1c 100%);
+  border-radius: calc(var(--cw) * 0.018);
+  padding: calc(var(--cw) * 0.028) calc(var(--cw) * 0.030) calc(var(--cw) * 0.022);
+  box-shadow:
+    0 0 0 1px #555,
+    0 8px 40px rgba(0,0,0,0.85),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cw) * 0.012);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: calc(var(--cw) * 0.040);
+}
+.brand { color: #bbb; font-size: calc(var(--cw)*0.016); letter-spacing: calc(var(--cw)*0.004); font-weight: bold; }
+.logo-box {
+  background: #141414;
+  border: 1.5px solid #888;
+  border-radius: 3px;
+  padding: calc(var(--cw)*0.004) calc(var(--cw)*0.010);
+  display: flex; flex-direction: column; align-items: center; line-height: 1;
+}
+.logo-hp    { color: #ccc; font-size: calc(var(--cw)*0.022); font-weight: bold; }
+.logo-model { color: #ccc; font-size: calc(var(--cw)*0.018); }
+
+/* ── Display ── */
+.display-housing {
+  background: linear-gradient(180deg, #8a9a8a 0%, #b5c8b5 40%, #c8d8c8 70%, #9ab49a 100%);
+  border-radius: calc(var(--cw)*0.010);
+  padding: calc(var(--cw)*0.012) calc(var(--cw)*0.014) calc(var(--cw)*0.010);
+  border: 1px solid #555;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+  height: calc(var(--cw) * 0.152);
+}
+.display-inner {
+  background: #c8d8b0;
+  border-radius: calc(var(--cw)*0.005);
+  height: 100%;
+  padding: calc(var(--cw)*0.005) calc(var(--cw)*0.012);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.display-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.annunciators { display: flex; gap: calc(var(--cw)*0.010); }
+.ann {
+  font-size: calc(var(--cw)*0.013); color: #3a5030; opacity: 0.25;
+  font-weight: bold; letter-spacing: 0.5px; transition: opacity 0.1s;
+}
+.ann.active { opacity: 1; }
+.display-mode {
+  font-family: 'Courier New', monospace;
+  font-size: calc(var(--cw)*0.020);
+  color: #2a4020;
+  font-weight: bold;
+  min-height: calc(var(--cw)*0.022);
+  letter-spacing: 2px;
+}
+#display-canvas {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Keyboard grid — 10 cols × 4 rows, ENTER spans rows 3-4 col 6 ── */
+.keyboard {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: calc(var(--cw)*0.007);
+  min-height: 0;
+}
+
+.key { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 0; min-height: 0; }
+
+/* Grid placement */
+.key[data-id="sqrtx"]{grid-column:1;grid-row:1} .key[data-id="ex"]   {grid-column:2;grid-row:1}
+.key[data-id="10x"]  {grid-column:3;grid-row:1} .key[data-id="yx"]   {grid-column:4;grid-row:1}
+.key[data-id="1x"]   {grid-column:5;grid-row:1} .key[data-id="chs"]  {grid-column:6;grid-row:1}
+.key[data-id="k7"]   {grid-column:7;grid-row:1} .key[data-id="k8"]   {grid-column:8;grid-row:1}
+.key[data-id="k9"]   {grid-column:9;grid-row:1} .key[data-id="div"]  {grid-column:10;grid-row:1}
+
+.key[data-id="sst"]  {grid-column:1;grid-row:2} .key[data-id="gto"]  {grid-column:2;grid-row:2}
+.key[data-id="sin"]  {grid-column:3;grid-row:2} .key[data-id="cos"]  {grid-column:4;grid-row:2}
+.key[data-id="tan"]  {grid-column:5;grid-row:2} .key[data-id="eex"]  {grid-column:6;grid-row:2}
+.key[data-id="k4"]   {grid-column:7;grid-row:2} .key[data-id="k5"]   {grid-column:8;grid-row:2}
+.key[data-id="k6"]   {grid-column:9;grid-row:2} .key[data-id="mul"]  {grid-column:10;grid-row:2}
+
+.key[data-id="rs"]   {grid-column:1;grid-row:3} .key[data-id="gsb"]  {grid-column:2;grid-row:3}
+.key[data-id="rdown"]{grid-column:3;grid-row:3} .key[data-id="xy"]   {grid-column:4;grid-row:3}
+.key[data-id="bsp"]  {grid-column:5;grid-row:3}
+.key[data-id="enter"]{grid-column:6;grid-row:3/span 2}
+.key[data-id="k1"]   {grid-column:7;grid-row:3} .key[data-id="k2"]   {grid-column:8;grid-row:3}
+.key[data-id="k3"]   {grid-column:9;grid-row:3} .key[data-id="sub"]  {grid-column:10;grid-row:3}
+
+.key[data-id="on"]   {grid-column:1;grid-row:4} .key[data-id="f"]    {grid-column:2;grid-row:4}
+.key[data-id="g"]    {grid-column:3;grid-row:4} .key[data-id="sto"]  {grid-column:4;grid-row:4}
+.key[data-id="rcl"]  {grid-column:5;grid-row:4}
+.key[data-id="k0"]   {grid-column:7;grid-row:4} .key[data-id="dot"]  {grid-column:8;grid-row:4}
+.key[data-id="sigma"]{grid-column:9;grid-row:4} .key[data-id="add"]  {grid-column:10;grid-row:4}
+
+/* Key anatomy: f-label / face / g-label */
+.fl { font-size:calc(var(--cw)*0.0115); color:#e09000; font-weight:bold; height:calc(var(--cw)*0.016); line-height:calc(var(--cw)*0.016); text-align:center; width:100%; white-space:nowrap; overflow:hidden; }
+.kf {
+  flex:1; width:100%; min-height:0;
+  background: linear-gradient(180deg,#3c3c3c 0%,#272727 55%,#1c1c1c 100%);
+  border-radius:calc(var(--cw)*0.006);
+  border:1px solid #4a4a4a; border-bottom:calc(var(--cw)*0.004) solid #0e0e0e;
+  box-shadow:0 2px 4px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.07);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition:all 0.04s; position:relative;
+  padding:calc(var(--cw)*0.003) calc(var(--cw)*0.002);
+}
+.key:active .kf, .key.pressed .kf {
+  background:linear-gradient(180deg,#1a1a1a 0%,#252525 100%);
+  border-bottom-width:1px; transform:translateY(calc(var(--cw)*0.002));
+  box-shadow:0 1px 2px rgba(0,0,0,0.7);
+}
+.km { font-size:calc(var(--cw)*0.021); font-weight:bold; color:#e4e4e4; line-height:1.1; text-align:center; white-space:nowrap; }
+.ks { font-size:calc(var(--cw)*0.012); color:#999; line-height:1; text-align:center; margin-top:calc(var(--cw)*0.002); white-space:nowrap; }
+.kb-hint { position:absolute; bottom:calc(var(--cw)*0.003); right:calc(var(--cw)*0.003); font-size:calc(var(--cw)*0.010); color:rgba(255,255,255,0.18); pointer-events:none; line-height:1; }
+.gl { font-size:calc(var(--cw)*0.0115); color:#4a9aee; font-weight:bold; height:calc(var(--cw)*0.016); line-height:calc(var(--cw)*0.016); text-align:center; width:100%; white-space:nowrap; overflow:hidden; }
+
+.key[data-id="on"] .kf { background:linear-gradient(180deg,#2a2a2a 0%,#1a1a1a 100%); }
+.key[data-id="f"]  .kf { background:linear-gradient(180deg,#c08000 0%,#a06000 55%,#7a4800 100%); border-color:#906000; border-bottom-color:#503000; }
+.key[data-id="f"]  .km { color:#fff; }
+.key[data-id="g"]  .kf { background:linear-gradient(180deg,#3a7acc 0%,#2a5aaa 55%,#1a3a88 100%); border-color:#2a5aaa; border-bottom-color:#0a1a5a; }
+.key[data-id="g"]  .km { color:#fff; }
+
+/* STO/RCL pending highlight */
+.key.sto-pending .kf { box-shadow:0 0 0 2px #e09000,0 2px 4px rgba(0,0,0,0.7); }
+.key.rcl-pending .kf { box-shadow:0 0 0 2px #4a9aee,0 2px 4px rgba(0,0,0,0.7); }
+
+@keyframes err { 0%,100%{background:#c8d8b0} 50%{background:#e09090} }
+.display-inner.error { animation:err 0.3s 2; }
+
+/* ── Side panel ── */
+.side-panel {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  width: 210px;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+  color: #aaa;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: calc(var(--cw) * 8 / 13);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #444 #1a1a1a;
+}
+
+.sp-section { display: flex; flex-direction: column; gap: 2px; }
+.sp-title {
+  color: #666; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  border-bottom: 1px solid #333; padding-bottom: 3px; margin-bottom: 3px;
+}
+.sp-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; line-height: 1.6; }
+.sp-label { color: #666; font-size: 10px; flex-shrink: 0; min-width: 32px; }
+.sp-val { color: #c8d8b0; font-size: 11px; text-align: right; word-break: break-all; }
+/* Stack rows get larger text */
+.sp-stack .sp-label { font-size: 13px; min-width: 20px; }
+.sp-stack .sp-val   { font-size: 16px; }
+.sp-row.sp-x .sp-label { color: #c8d8b0; font-weight: bold; }
+.sp-row.sp-x .sp-val   { color: #e4e4e4; font-weight: bold; font-size: 18px; }
+.sp-row.sp-highlight .sp-val { color: #e09000; }
+
+/* Reg table 2 columns */
+.sp-regs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; }
+.sp-reg-cell { display: flex; justify-content: space-between; gap: 2px; line-height: 1.7; }
+.sp-reg-cell .sp-label { min-width: 28px; font-size: 13px; }
+.sp-reg-cell .sp-val   { font-size: 13px; }
+
+/* Tooltip */
+.tooltip {
+  position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.8); color:#bbb; font-size:11px;
+  padding:4px 12px; border-radius:4px; pointer-events:none;
+  opacity:0; transition:opacity 0.25s; white-space:nowrap;
+}
+.tooltip.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ── Calculator ── -->
+  <div class="calculator">
+
+    <div class="header">
+      <div class="brand">HEWLETT · PACKARD</div>
+      <div class="logo-box">
+        <span class="logo-hp">hp</span>
+        <span class="logo-model">11C</span>
+      </div>
+    </div>
+
+    <div class="display-housing">
+      <div class="display-inner" id="displayInner">
+        <div class="display-top">
+          <div class="annunciators">
+            <span class="ann" id="ann-f">f</span>
+            <span class="ann" id="ann-g">g</span>
+            <span class="ann" id="ann-run">PRGM</span>
+            <span class="ann" id="ann-user">USER</span>
+            <span class="ann" id="ann-rad">RAD</span>
+            <span class="ann" id="ann-grad">GRAD</span>
+          </div>
+          <div class="annunciators">
+            <span class="ann" id="ann-c">C</span>
+          </div>
+        </div>
+        <div class="display-mode" id="display-mode"></div>
+        <canvas id="display-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <!-- ── Side panel ── -->
+  <div class="side-panel">
+
+    <div class="sp-section">
+      <div class="sp-title">Stack</div>
+      <div class="sp-row sp-stack"><span class="sp-label">T</span><span class="sp-val" id="sp-T">0</span></div>
+      <div class="sp-row sp-stack"><span class="sp-label">Z</span><span class="sp-val" id="sp-Z">0</span></div>
+      <div class="sp-row sp-stack"><span class="sp-label">Y</span><span class="sp-val" id="sp-Y">0</span></div>
+      <div class="sp-row sp-stack sp-x"><span class="sp-label">X</span><span class="sp-val" id="sp-X">0</span></div>
+    </div>
+
+    <div class="sp-section">
+      <div class="sp-title">Last X</div>
+      <div class="sp-row"><span class="sp-label">LX</span><span class="sp-val" id="sp-LX">0</span></div>
+    </div>
+
+    <div class="sp-section">
+      <div class="sp-title">Mem R0–R9</div>
+      <div class="sp-regs" id="sp-regs-main"></div>
+    </div>
+
+    <div class="sp-section">
+      <div class="sp-title">Mem R.0–R.9</div>
+      <div class="sp-regs" id="sp-regs-dot"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+
+const S = {
+  stack: [0,0,0,0],    // X Y Z T
+  lastX: 0,
+  mem: {},             // keys: '0'..'9', '.0'..'.9'
+  entering: false,
+  entryStr: '',
+  shift: null,         // null | 'f' | 'g'
+  angleMode: 'DEG',
+  liftEnabled: false,  // true → prochain nombre lift; false → remplace X (après ENTER)
+  stoMode: null,       // null|'sto'|'rcl'|'sto+'|'sto-'|'sto*'|'sto/'
+  stoDecimal: false,   // true → registre .n
+  displayMode: 'ALL',  // 'ALL'|'FIX'|'SCI'|'ENG'
+  displayDigits: 4,
+  fmtMode: null,       // null|'FIX'|'SCI'|'ENG' — attend le chiffre
+};
+
+const x  = () => S.stack[0];
+const y  = () => S.stack[1];
+const setX = v => { S.stack[0] = v; };
+
+function lift() { S.stack[3]=S.stack[2]; S.stack[2]=S.stack[1]; S.stack[1]=S.stack[0]; }
+function drop() { S.stack[0]=S.stack[1]; S.stack[1]=S.stack[2]; S.stack[2]=S.stack[3]; }
+
+function finishEntry() {
+  if (S.entering) {
+    S.stack[0] = parseFloat(S.entryStr) || 0;
+    S.entering = false; S.entryStr = '';
+  }
+}
+
+function toRadMode(v)   { return S.angleMode==='DEG'?v*Math.PI/180 : S.angleMode==='GRAD'?v*Math.PI/200 : v; }
+function fromRadMode(v) { return S.angleMode==='DEG'?v*180/Math.PI : S.angleMode==='GRAD'?v*200/Math.PI : v; }
+
+function fmt(v) {
+  if (!isFinite(v)||isNaN(v)) return 'Error';
+  const n = S.displayDigits;
+  switch (S.displayMode) {
+    case 'FIX': {
+      if (v===0) return (0).toFixed(n);
+      const abs=Math.abs(v);
+      if (abs>=1e10 || (abs>0 && abs<Math.pow(10,-(n+1)))) return fmtSci(v,n);
+      return v.toFixed(n);
+    }
+    case 'SCI': return fmtSci(v, n);
+    case 'ENG': {
+      if (v===0) return (0).toFixed(n);
+      const exp3 = Math.floor(Math.floor(Math.log10(Math.abs(v)))/3)*3;
+      const m = v/Math.pow(10,exp3);
+      const sign = exp3>=0?'+':'';
+      return m.toFixed(n)+'e'+sign+exp3;
+    }
+    default: { // ALL
+      if (v===0) return '0';
+      const abs=Math.abs(v);
+      let s;
+      if (abs>=1e-4 && abs<1e10) {
+        s=parseFloat(v.toPrecision(10)).toString();
+        if (s.includes('.')) s=s.replace(/\.?0+$/,'');
+      } else { s=v.toExponential(6); }
+      return s;
+    }
+  }
+}
+function fmtSci(v, n) {
+  const s=v.toExponential(n);
+  // normalise exposant: 1.23e+4 → 1.23e4, 1.23e-4 → 1.23e-4
+  return s.replace('e+','e');
+}
+
+// ── 7-Segment Canvas Renderer ─────────────────────────────────────────────────
+// segments: [a=top, b=top-right, c=bot-right, d=bottom, e=bot-left, f=top-left, g=middle]
+const SEG_MAP = {
+  '0':[1,1,1,1,1,1,0], '1':[0,1,1,0,0,0,0], '2':[1,1,0,1,1,0,1],
+  '3':[1,1,1,1,0,0,1], '4':[0,1,1,0,0,1,1], '5':[1,0,1,1,0,1,1],
+  '6':[1,0,1,1,1,1,1], '7':[1,1,1,0,0,0,0], '8':[1,1,1,1,1,1,1],
+  '9':[1,1,1,1,0,1,1], '-':[0,0,0,0,0,0,1], 'E':[1,0,0,1,1,1,1],
+  'e':[1,0,0,1,1,1,1], 'r':[0,0,0,0,1,0,1], 'o':[0,0,1,1,1,0,0],
+  ' ':[0,0,0,0,0,0,0],
+};
+
+let _displayStr = '0';
+
+function _parseCells(str) {
+  const cells = [];
+  for (const c of str) {
+    if (c === '.') {
+      if (cells.length > 0) cells[cells.length-1].dot = true;
+      else cells.push({ch:' ', dot:true});
+    } else {
+      cells.push({ch: c in SEG_MAP ? c : ' ', dot:false});
+    }
+  }
+  // pad left with ghost cells to always fill 11 positions
+  while (cells.length < 11) cells.unshift({ch:' ', dot:false});
+  return cells.slice(-11);
+}
+
+function _hex(ctx, x, y, w, h, c) {
+  ctx.beginPath();
+  ctx.moveTo(x+c, y);     ctx.lineTo(x+w-c, y);
+  ctx.lineTo(x+w, y+c);  ctx.lineTo(x+w, y+h-c);
+  ctx.lineTo(x+w-c, y+h);ctx.lineTo(x+c, y+h);
+  ctx.lineTo(x, y+h-c);  ctx.lineTo(x, y+c);
+  ctx.closePath(); ctx.fill();
+}
+
+function _drawDigit(ctx, segs, x, y, DW, DH, on, off) {
+  const T  = DW * 0.14;    // épaisseur segment
+  const G  = T  * 0.18;    // espace entre segments
+  const C  = T  * 0.48;    // extrémités en pointe
+  const HL = DW - 2*(T+G);
+  const VH = DH/2 - T - 2*G;
+  // [sx, sy, sw, sh] for each segment
+  const defs = [
+    [T+G,    0,        HL, T ],  // a
+    [DW-T,   T+G,      T,  VH], // b
+    [DW-T,   DH/2+G,   T,  VH], // c
+    [T+G,    DH-T,     HL, T ], // d
+    [0,      DH/2+G,   T,  VH], // e
+    [0,      T+G,      T,  VH], // f
+    [T+G,    DH/2-T/2, HL, T ], // g
+  ];
+  defs.forEach(([sx,sy,sw,sh], i) => {
+    ctx.fillStyle = segs[i] ? on : off;
+    _hex(ctx, x+sx, y+sy, sw, sh, C);
+  });
+}
+
+function renderDisplay(str) {
+  _displayStr = str;
+  const cv = document.getElementById('display-canvas');
+  if (!cv) return;
+  const rect = cv.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = Math.round(rect.width  * dpr);
+  cv.height = Math.round(rect.height * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const cells = _parseCells(str);
+  const DH   = H * 0.94;
+  const DW   = DH * 0.52;
+  const DOTR = DH * 0.052;
+  const DOTG = DW * 0.10;
+  const CELLW = DW + DOTG + DOTR*2;
+  const GAP   = DW * 0.16;
+  const ON  = '#1b2c0e';
+  const OFF = 'rgba(15,35,5,0.05)';
+
+  let cx = W - cells.length*(CELLW+GAP) + GAP - 2;
+  const cy = (H - DH) / 2;
+
+  for (const {ch, dot} of cells) {
+    _drawDigit(ctx, SEG_MAP[ch]||SEG_MAP[' '], cx, cy, DW, DH, ON, OFF);
+    // decimal dot (bottom-right of digit cell)
+    const dx = cx + DW + DOTG + DOTR;
+    const dy = cy + DH - DOTR*1.1;
+    ctx.fillStyle = dot ? ON : OFF;
+    ctx.beginPath(); ctx.arc(dx, dy, DOTR, 0, Math.PI*2); ctx.fill();
+    cx += CELLW + GAP;
+  }
+}
+
+// ── Display ───────────────────────────────────────────────────────────────────
+
+function refreshDisplay() {
+  renderDisplay(S.entering ? (S.entryStr||'0') : fmt(x()));
+  updateSidePanel();
+}
+
+function flashError() {
+  const d=document.getElementById('displayInner');
+  d.classList.remove('error'); void d.offsetWidth; d.classList.add('error');
+  setTimeout(()=>d.classList.remove('error'),700);
+  renderDisplay('Error');
+}
+
+function refreshAnn() {
+  document.getElementById('ann-f').classList.toggle('active',S.shift==='f');
+  document.getElementById('ann-g').classList.toggle('active',S.shift==='g');
+  document.getElementById('ann-rad').classList.toggle('active',S.angleMode==='RAD');
+  document.getElementById('ann-grad').classList.toggle('active',S.angleMode==='GRAD');
+}
+
+function refreshModeDisplay() {
+  const el=document.getElementById('display-mode');
+  if (S.fmtMode) { el.textContent=S.fmtMode+' _'; return; }
+  if (S.stoMode) {
+    let s=S.stoMode.replace('sto','STO').replace('rcl','RCL').toUpperCase();
+    if (S.stoDecimal) s+='.';
+    el.textContent=s+'_'; return;
+  }
+  el.textContent = S.displayMode==='ALL' ? '' : S.displayMode+' '+S.displayDigits;
+}
+
+// ── Side panel ────────────────────────────────────────────────────────────────
+
+function updateSidePanel() {
+  document.getElementById('sp-T').textContent  = fmt(S.stack[3]);
+  document.getElementById('sp-Z').textContent  = fmt(S.stack[2]);
+  document.getElementById('sp-Y').textContent  = fmt(S.stack[1]);
+  document.getElementById('sp-X').textContent  = S.entering?(S.entryStr||'0'):fmt(S.stack[0]);
+  document.getElementById('sp-LX').textContent = fmt(S.lastX);
+
+  function fillRegs(containerId, keys) {
+    const el=document.getElementById(containerId);
+    el.innerHTML='';
+    keys.forEach(k=>{
+      const v=S.mem[k]??0;
+      const cell=document.createElement('div');
+      cell.className='sp-reg-cell'+(v!==0?' sp-highlight':'');
+      cell.innerHTML=`<span class="sp-label">R${k}</span><span class="sp-val">${fmt(v)}</span>`;
+      el.appendChild(cell);
+    });
+  }
+  fillRegs('sp-regs-main', ['0','1','2','3','4','5','6','7','8','9']);
+  fillRegs('sp-regs-dot',  ['.0','.1','.2','.3','.4','.5','.6','.7','.8','.9']);
+  saveState();
+}
+
+// ── Persistance localStorage ──────────────────────────────────────────────────
+
+const LS_KEY = 'hp11c';
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      stack: S.stack,
+      lastX: S.lastX,
+      mem: S.mem,
+      angleMode: S.angleMode,
+      displayMode: S.displayMode,
+      displayDigits: S.displayDigits,
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (Array.isArray(d.stack) && d.stack.length===4) S.stack = d.stack.map(Number);
+    if (typeof d.lastX === 'number') S.lastX = d.lastX;
+    if (d.mem && typeof d.mem === 'object') S.mem = d.mem;
+    if (['DEG','RAD','GRAD'].includes(d.angleMode)) S.angleMode = d.angleMode;
+    if (['ALL','FIX','SCI','ENG'].includes(d.displayMode)) S.displayMode = d.displayMode;
+    if (typeof d.displayDigits === 'number') S.displayDigits = d.displayDigits;
+  } catch(e) {}
+}
+
+// ── Key actions ───────────────────────────────────────────────────────────────
+
+function digitKey(d) {
+  if (S.entering) {
+    if (S.entryStr.replace(/[-e.]/g,'').length>=10) return;
+    S.entryStr+=String(d);
+  } else {
+    if (S.liftEnabled) lift();
+    S.entering=true; S.entryStr=String(d);
+  }
+  refreshDisplay();
+}
+
+function dotKey() {
+  if (!S.entering) {
+    if (S.liftEnabled) lift();
+    S.entering=true; S.entryStr='0.';
+  } else if (!S.entryStr.includes('.')) S.entryStr+='.';
+  refreshDisplay();
+}
+
+function eexKey() {
+  if (!S.entering) {
+    if (S.liftEnabled) lift();
+    S.entering=true; S.entryStr='1';
+  }
+  if (!S.entryStr.toLowerCase().includes('e')) S.entryStr+='e';
+  refreshDisplay();
+}
+
+function chsKey() {
+  if (S.entering) {
+    const ei=S.entryStr.toLowerCase().indexOf('e');
+    if (ei>=0) {
+      const exp=S.entryStr.slice(ei+1);
+      S.entryStr=S.entryStr.slice(0,ei+1)+(exp.startsWith('-')?exp.slice(1):'-'+exp);
+    } else {
+      S.entryStr=S.entryStr.startsWith('-')?S.entryStr.slice(1):'-'+S.entryStr;
+    }
+    refreshDisplay();
+  } else { setX(-x()); refreshDisplay(); }
+}
+
+function enterKey() {
+  finishEntry(); S.lastX=x(); lift(); S.stack[0]=S.stack[1];
+  S.liftEnabled=false; S.entering=false; refreshDisplay();
+}
+
+function backspaceKey() {
+  if (S.entering && S.entryStr.length>0) {
+    S.entryStr=S.entryStr.slice(0,-1);
+    if (S.entryStr===''||S.entryStr==='-') S.entryStr='0';
+    refreshDisplay();
+  } else { setX(0); refreshDisplay(); }
+}
+
+function clxKey() { S.entering=false; S.entryStr=''; setX(0); refreshDisplay(); }
+
+function binaryOp(fn) {
+  finishEntry(); S.lastX=x();
+  const r=fn(y(),x());
+  if (!isFinite(r)||isNaN(r)) { flashError(); return; }
+  drop(); setX(r); S.liftEnabled=true; refreshDisplay();
+}
+
+function unaryOp(fn) {
+  finishEntry(); S.lastX=x();
+  let r; try { r=fn(x()); } catch(e) { flashError(); return; }
+  if (!isFinite(r)||isNaN(r)) { flashError(); return; }
+  setX(r); S.liftEnabled=true; refreshDisplay();
+}
+
+function rollDown() {
+  finishEntry();
+  const t=S.stack[0]; S.stack[0]=S.stack[1]; S.stack[1]=S.stack[2]; S.stack[2]=S.stack[3]; S.stack[3]=t;
+  refreshDisplay();
+}
+function rollUp() {
+  finishEntry();
+  const t=S.stack[3]; S.stack[3]=S.stack[2]; S.stack[2]=S.stack[1]; S.stack[1]=S.stack[0]; S.stack[0]=t;
+  refreshDisplay();
+}
+function xySwap() { finishEntry(); const t=S.stack[0]; S.stack[0]=S.stack[1]; S.stack[1]=t; refreshDisplay(); }
+function lastXKey() { finishEntry(); lift(); setX(S.lastX); S.liftEnabled=true; refreshDisplay(); }
+
+function setAngle(mode) { S.angleMode=mode; refreshAnn(); }
+
+function powerOn() {
+  S.stack=[0,0,0,0]; S.lastX=0; S.entering=false; S.entryStr='';
+  S.shift=null; S.liftEnabled=false; S.stoMode=null; S.stoDecimal=false;
+  S.displayMode='ALL'; S.displayDigits=4; S.fmtMode=null;
+  refreshAnn(); refreshModeDisplay(); refreshDisplay();
+}
+
+// ── FIX / SCI / ENG machine d'états ──────────────────────────────────────────
+
+function enterFmtMode(mode) {
+  S.fmtMode=mode; refreshModeDisplay();
+}
+
+function handleFmtMode(id) {
+  if (id in DIGIT_IDS) {
+    S.displayMode=S.fmtMode;
+    S.displayDigits=parseInt(DIGIT_IDS[id]);
+    S.fmtMode=null;
+    refreshModeDisplay(); refreshDisplay();
+    return true;
+  }
+  // toute autre touche annule
+  S.fmtMode=null; refreshModeDisplay();
+  return false;
+}
+
+// ── STO / RCL machine d'états ─────────────────────────────────────────────────
+
+function enterStoMode(mode) {
+  finishEntry();
+  S.stoMode=mode; S.stoDecimal=false;
+  refreshModeDisplay();
+  highlightStoKey();
+}
+
+function highlightStoKey() {
+  document.querySelector('.key[data-id="sto"]')?.classList.toggle('sto-pending', S.stoMode==='sto'||S.stoMode?.startsWith('sto'));
+  document.querySelector('.key[data-id="rcl"]')?.classList.toggle('rcl-pending', S.stoMode==='rcl');
+}
+
+function cancelStoMode() {
+  S.stoMode=null; S.stoDecimal=false;
+  refreshModeDisplay();
+  document.querySelector('.key[data-id="sto"]')?.classList.remove('sto-pending');
+  document.querySelector('.key[data-id="rcl"]')?.classList.remove('rcl-pending');
+}
+
+const DIGIT_IDS = {k0:'0',k1:'1',k2:'2',k3:'3',k4:'4',k5:'5',k6:'6',k7:'7',k8:'8',k9:'9'};
+
+function executeStorageOp(mode, regKey) {
+  const cur=S.mem[regKey]??0;
+  const xv=x();
+  switch(mode) {
+    case 'sto':  S.mem[regKey]=xv; break;
+    case 'sto+': S.mem[regKey]=cur+xv; break;
+    case 'sto-': S.mem[regKey]=cur-xv; break;
+    case 'sto*': S.mem[regKey]=cur*xv; break;
+    case 'sto/': if (xv===0){flashError();return;} S.mem[regKey]=cur/xv; break;
+    case 'rcl':
+      lift(); setX(S.mem[regKey]??0); S.liftEnabled=true;
+      refreshDisplay(); break;
+  }
+  updateSidePanel();
+}
+
+// Returns true if key was consumed by sto mode
+function handleStoMode(id) {
+  // Decimal → switch to .n registers
+  if (id==='dot') {
+    S.stoDecimal=true; refreshModeDisplay(); return true;
+  }
+  // Arithmetic modifiers (only when mode is exactly 'sto')
+  if (S.stoMode==='sto') {
+    const mods={add:'sto+',sub:'sto-',mul:'sto*',div:'sto/'};
+    if (id in mods) { S.stoMode=mods[id]; refreshModeDisplay(); return true; }
+  }
+  // Digit → execute
+  if (id in DIGIT_IDS) {
+    const regKey=(S.stoDecimal?'.':'')+DIGIT_IDS[id];
+    const mode=S.stoMode;
+    cancelStoMode();
+    executeStorageOp(mode, regKey);
+    return true;
+  }
+  // ON cancels
+  if (id==='on') { cancelStoMode(); return false; }
+  // Any other key: cancel silently, let it be handled normally
+  cancelStoMode();
+  return false;
+}
+
+// ── Key definitions ───────────────────────────────────────────────────────────
+
+const KEYS = [
+  // Row 1
+  { id:'sqrtx',m:'√x̄', s:'',     fl:'A',    gl:'x²',
+    a:()=>unaryOp(v=>Math.sqrt(v)),              ga:()=>unaryOp(v=>v*v) },
+  { id:'ex',   m:'eˣ',  s:'',     fl:'B',    gl:'LN',
+    a:()=>unaryOp(v=>Math.exp(v)),               ga:()=>unaryOp(v=>Math.log(v)) },
+  { id:'10x',  m:'10ˣ', s:'',     fl:'C',    gl:'LOG',
+    a:()=>unaryOp(v=>Math.pow(10,v)),            ga:()=>unaryOp(v=>Math.log10(v)) },
+  { id:'yx',   m:'yˣ',  s:'',     fl:'D',    gl:'%',     kb:'^',
+    a:()=>binaryOp((a,b)=>Math.pow(a,b)),        ga:()=>binaryOp((a,b)=>a*b/100) },
+  { id:'1x',   m:'1/x', s:'',     fl:'E',    gl:'Δ%',
+    a:()=>unaryOp(v=>1/v) },
+  { id:'chs',  m:'CHS', s:'',     fl:'π',    gl:'ABS',   kb:'c',
+    a:chsKey,
+    fa:()=>{ lift(); setX(Math.PI); S.liftEnabled=true; refreshDisplay(); },
+    ga:()=>unaryOp(v=>Math.abs(v)) },
+  { id:'k7',   m:'7',   s:'',     fl:'FIX',  gl:'DEG',   kb:'7',
+    a:()=>digitKey(7),  fa:()=>enterFmtMode('FIX'),  ga:()=>setAngle('DEG') },
+  { id:'k8',   m:'8',   s:'',     fl:'SCI',  gl:'RAD',   kb:'8',
+    a:()=>digitKey(8),  fa:()=>enterFmtMode('SCI'),  ga:()=>setAngle('RAD') },
+  { id:'k9',   m:'9',   s:'',     fl:'ENG',  gl:'GRD',   kb:'9',
+    a:()=>digitKey(9),  fa:()=>enterFmtMode('ENG'),  ga:()=>setAngle('GRAD') },
+  { id:'div',  m:'÷',   s:'',     fl:'x≤y',  gl:'x<0',   kb:'/',
+    a:()=>binaryOp((a,b)=>a/b) },
+
+  // Row 2
+  { id:'sst',  m:'SST', s:'BST',  fl:'LBL',  gl:'',      a:null },
+  { id:'gto',  m:'GTO', s:'HYP⁻¹',fl:'HYP', gl:'',      a:null },
+  { id:'sin',  m:'SIN', s:'SIN⁻¹',fl:'xẑ(i)',gl:'',
+    a:()=>unaryOp(v=>Math.sin(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.asin(v))) },
+  { id:'cos',  m:'COS', s:'COS⁻¹',fl:'(i)',  gl:'',
+    a:()=>unaryOp(v=>Math.cos(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.acos(v))) },
+  { id:'tan',  m:'TAN', s:'TAN⁻¹',fl:'I',    gl:'',
+    a:()=>unaryOp(v=>Math.tan(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.atan(v))) },
+  { id:'eex',  m:'EEX', s:'→P',   fl:'→R',   gl:'',      kb:'e',  a:eexKey },
+  { id:'k4',   m:'4',   s:'SF',   fl:'xẑI',  gl:'',      kb:'4',  a:()=>digitKey(4) },
+  { id:'k5',   m:'5',   s:'CF',   fl:'DSE',  gl:'',      kb:'5',  a:()=>digitKey(5) },
+  { id:'k6',   m:'6',   s:'F?',   fl:'ISG',  gl:'',      kb:'6',  a:()=>digitKey(6) },
+  { id:'mul',  m:'×',   s:'',     fl:'x>y',  gl:'x>0',   kb:'*',
+    a:()=>binaryOp((a,b)=>a*b) },
+
+  // Row 3
+  { id:'rs',   m:'R/S', s:'P/R',  fl:'PSE',  gl:'',      a:null },
+  { id:'gsb',  m:'GSB', s:'RTN',  fl:'Σ',    gl:'',      a:null },
+  { id:'rdown',m:'R↓',  s:'R↑',   fl:'PRGM', gl:'',
+    a:rollDown, ga:rollUp },
+  { id:'xy',   m:'x≷y', s:'RND',  fl:'REG',  gl:'',      a:xySwap },
+  { id:'bsp',  m:'←',   s:'CLX',  fl:'PRFX', gl:'',      kb:'Backspace',
+    a:backspaceKey, ga:clxKey },
+  { id:'enter',m:'ENTER',s:'',    fl:'',     gl:'LSTX',  kb:'Enter',
+    a:enterKey, ga:lastXKey },
+  { id:'k1',   m:'1',   s:'Cy,x', fl:'RAN#', gl:'',      kb:'1',
+    a:()=>digitKey(1),
+    fa:()=>{ lift(); setX(Math.random()); S.liftEnabled=true; refreshDisplay(); } },
+  { id:'k2',   m:'2',   s:'→H',   fl:'Py,x', gl:'',      kb:'2',  a:()=>digitKey(2) },
+  { id:'k3',   m:'3',   s:'→DEG', fl:'→H.MS',gl:'',      kb:'3',  a:()=>digitKey(3) },
+  { id:'sub',  m:'−',   s:'',     fl:'x≠y',  gl:'x≠0',   kb:'-',
+    a:()=>binaryOp((a,b)=>a-b) },
+
+  // Row 4
+  { id:'on',   m:'ON',  s:'',     fl:'',     gl:'',      a:powerOn },
+  { id:'f',    m:'f',   s:'',     fl:'',     gl:'',
+    a:()=>{ S.shift=S.shift==='f'?null:'f'; refreshAnn(); } },
+  { id:'g',    m:'g',   s:'',     fl:'',     gl:'',
+    a:()=>{ S.shift=S.shift==='g'?null:'g'; refreshAnn(); } },
+  { id:'sto',  m:'STO', s:'INT',  fl:'FRAC', gl:'',
+    a:()=>enterStoMode('sto'),
+    fa:()=>unaryOp(v=>v-Math.trunc(v)),
+    ga:()=>unaryOp(v=>Math.trunc(v)) },
+  { id:'rcl',  m:'RCL', s:'MEM',  fl:'USER', gl:'',
+    a:()=>enterStoMode('rcl') },
+  { id:'k0',   m:'0',   s:'x̄',   fl:'',     gl:'x=0',   kb:'0',  a:()=>digitKey(0) },
+  { id:'dot',  m:'·',   s:'s',    fl:'',     gl:'',      kb:'.',  a:dotKey },
+  { id:'sigma',m:'Σ+',  s:'Σ−',   fl:'',     gl:'n!',
+    a:null,
+    ga:()=>{ const n=Math.round(x()); if(n<0||n>170){flashError();return;} let r=1; for(let i=2;i<=n;i++)r*=i; unaryOp(()=>r); } },
+  { id:'add',  m:'+',   s:'',     fl:'x=y',  gl:'x=0',   kb:'+',
+    a:()=>binaryOp((a,b)=>a+b) },
+];
+
+// ── Build DOM ─────────────────────────────────────────────────────────────────
+
+function buildKeyboard() {
+  const kb=document.getElementById('keyboard');
+  KEYS.forEach(k=>{
+    const wrap=document.createElement('div');
+    wrap.className='key'; wrap.dataset.id=k.id;
+
+    const fl=document.createElement('div'); fl.className='fl'; fl.textContent=k.fl||''; wrap.appendChild(fl);
+
+    const face=document.createElement('div'); face.className='kf';
+    const main=document.createElement('div'); main.className='km'; main.textContent=k.m; face.appendChild(main);
+    if (k.s) { const sub=document.createElement('div'); sub.className='ks'; sub.textContent=k.s; face.appendChild(sub); }
+    if (k.kb) {
+      const hint=document.createElement('div'); hint.className='kb-hint';
+      hint.textContent=k.kb==='Enter'?'⏎':k.kb==='Backspace'?'⌫':k.kb; face.appendChild(hint);
+    }
+    wrap.appendChild(face);
+
+    const gl=document.createElement('div'); gl.className='gl'; gl.textContent=k.gl||''; wrap.appendChild(gl);
+
+    wrap.addEventListener('mousedown',e=>{e.preventDefault();pressKey(k.id);});
+    wrap.addEventListener('touchstart',e=>{e.preventDefault();pressKey(k.id);},{passive:false});
+    kb.appendChild(wrap);
+  });
+}
+
+// ── Dispatch ──────────────────────────────────────────────────────────────────
+
+const keyById={};
+KEYS.forEach(k=>keyById[k.id]=k);
+
+function pressKey(id) {
+  const k=keyById[id]; if (!k) return;
+
+  const el=document.querySelector(`.key[data-id="${id}"] .kf`);
+  if (el) { el.parentElement.classList.add('pressed'); setTimeout(()=>el.parentElement.classList.remove('pressed'),120); }
+
+  if (id==='f'||id==='g') { k.a(); return; }
+
+  // FMT mode (FIX/SCI/ENG attend un chiffre)
+  if (S.fmtMode!==null) {
+    if (handleFmtMode(id)) return;
+  }
+
+  // STO/RCL mode intercepts most keys
+  if (S.stoMode!==null) {
+    if (handleStoMode(id)) return;
+  }
+
+  const shift=S.shift; S.shift=null; refreshAnn();
+
+  if (shift==='f' && k.fa) k.fa();
+  else if (shift==='g' && k.ga) k.ga();
+  else if (k.a) k.a();
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+
+const KB = {
+  '0':'k0','1':'k1','2':'k2','3':'k3','4':'k4','5':'k5','6':'k6','7':'k7','8':'k8','9':'k9',
+  '.':'dot','+':'add','-':'sub','*':'mul','/':'div','^':'yx',
+  'Enter':'enter','Backspace':'bsp','e':'eex','E':'eex','c':'chs','C':'chs',
+};
+
+document.addEventListener('keydown',e=>{
+  if (e.ctrlKey||e.metaKey||e.altKey) return;
+  const id=KB[e.key]; if (!id) return;
+  e.preventDefault(); pressKey(id); showTip(e.key);
+});
+
+let tipTimer;
+function showTip(k) {
+  const L={'Enter':'ENTER','Backspace':'← efface','+':'Addition','-':'Soustraction','*':'Multiplication','/':'Division','^':'yˣ','e':'EEX','c':'CHS','C':'CHS'};
+  const tip=document.getElementById('tooltip');
+  tip.textContent=L[k]||k; tip.classList.add('show');
+  clearTimeout(tipTimer); tipTimer=setTimeout(()=>tip.classList.remove('show'),1000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadState();
+buildKeyboard();
+refreshAnn();
+refreshModeDisplay();
+// render après layout pour que le canvas ait ses dimensions CSS
+requestAnimationFrame(() => {
+  refreshDisplay();
+  new ResizeObserver(() => renderDisplay(_displayStr))
+    .observe(document.getElementById('display-canvas'));
+});
+</script>
+</body>
+</html>
