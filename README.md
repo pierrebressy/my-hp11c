@@ -30,3 +30,15 @@ Après une modification de `index.html`, relancer `./macos/build.sh`.
 
 Le listage du programme s'affiche dans le panneau de droite (clic sur une ligne pour s'y placer).
 Une touche quelconque arrête un programme en cours (« running »).
+
+## Touche ON et combinaisons
+
+`ON` éteint / rallume ; la mémoire est continue (tout est retrouvé à l'identique).
+Sur la vraie HP-11C on maintient ON, on appuie sur une touche puis on relâche ON.
+Ici, en deux temps : **calculatrice éteinte**, appuyer sur la touche **puis** sur `ON`.
+
+| Séquence (éteinte) | Effet |
+|---|---|
+| `·` puis `ON` | bascule virgule / point décimal (1.234,50 ↔ 1,234.50) |
+| `−` puis `ON` | remise à zéro complète de la mémoire (« Pr Error », FIX 4, DEG) |
+| `×` puis `ON` | autotest (« running » puis tous les segments) |

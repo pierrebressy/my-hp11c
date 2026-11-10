@@ -86,6 +86,8 @@ body {
   position: absolute; left: calc(var(--u)*12); top: calc(var(--u)*4);
   font-size: calc(var(--u)*13); color: #1c1d14; letter-spacing: 0.06em; white-space: nowrap; opacity: 0.85;
 }
+.display-inner.off .ann, .display-inner.off .display-mode { visibility: hidden; }
+.display-inner.selftest .ann { opacity: 0.9; }
 @keyframes err { 0%,100%{filter:none} 50%{filter:brightness(1.15) sepia(0.6) hue-rotate(-40deg)} }
 .display-inner.error { animation:err 0.3s 2; }
 
@@ -390,6 +392,10 @@ const S = {
   flags: [],           // SF / CF / F?
   user: false,         // f USER: A–E run GSB A–E without f
   err: false,
+  euro: true,          // decimal comma (· ON toggles to decimal point)
+  off: false,
+  onCombo: null,       // key pressed while off, applied by the next ON (· − ×)
+  hold: false,         // message shown until the next key (Pr Error, self-test)
 };
 
 const x  = () => S.stack[0];
@@ -452,10 +458,13 @@ const SEG_MAP = {
   '3':[1,1,1,1,0,0,1], '4':[0,1,1,0,0,1,1], '5':[1,0,1,1,0,1,1],
   '6':[1,0,1,1,1,1,1], '7':[1,1,1,0,0,0,0], '8':[1,1,1,1,1,1,1],
   '9':[1,1,1,1,0,1,1], '-':[0,0,0,0,0,0,1], 'E':[1,0,0,1,1,1,1],
-  'e':[1,0,0,1,1,1,1], 'r':[0,0,0,0,1,0,1], 'o':[0,0,1,1,1,0,0],
+  'e':[1,0,0,1,1,1,1], 'r':[0,0,0,0,1,0,1], 'o':[0,0,1,1,1,0,1],
   ' ':[0,0,0,0,0,0,0], 'u':[0,0,1,1,1,0,0], 'n':[0,0,1,0,1,0,1],
   'i':[0,0,1,0,0,0,0], 'g':[1,1,1,1,0,1,1], 'P':[1,1,0,0,1,1,1],
+  // "running" as shown by the real calculator: r u n i drawn in the upper half
+  'ʳ':[1,0,0,0,0,1,0], 'ᵘ':[0,1,0,0,0,1,1], 'ⁿ':[1,1,0,0,0,1,0], 'ⁱ':[0,0,0,0,0,1,0],
 };
+const RUNNING = 'ʳᵘⁿⁿⁱⁿg';          // the g keeps its full shape (like a 9)
 
 let _displayStr = '0';
 
@@ -474,7 +483,7 @@ function _parseCells(str) {
     mant = ip.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fp !== undefined ? '.' + fp : '');
   }
   // European convention (real HP: ON + ·): decimal comma, dot for thousands → 1.500,0000
-  mant = mant.replace(/[.,]/g, c => c === '.' ? ',' : '.');
+  if (S.euro) mant = mant.replace(/[.,]/g, c => c === '.' ? ',' : '.');
   const cells = [];
   for (const c of mant) {
     if (c === '.' || c === ',') {
@@ -657,7 +666,7 @@ function refreshModeDisplay() {
 
 // ── Side panel ────────────────────────────────────────────────────────────────
 
-const fmtP = v => (typeof v==='string'?v:fmt(v)).replace('.', ',');   // decimal comma, like the LCD
+const fmtP = v => { const s=typeof v==='string'?v:fmt(v); return S.euro ? s.replace('.', ',') : s; };   // radix as on the LCD
 
 function updateSidePanel() {
   if (S.running && !S.pausing) return;
@@ -705,6 +714,7 @@ function saveState() {
       pc: S.pc,
       flags: S.flags,
       user: S.user,
+      euro: S.euro,
     });
     localStorage.setItem(LS_KEY, json);
   } catch(e) {}
@@ -733,6 +743,7 @@ function loadState() {
     if (Number.isInteger(d.pc) && d.pc >= 0 && d.pc <= S.prgm.length) S.pc = d.pc;
     if (Array.isArray(d.flags)) S.flags = d.flags.map(Boolean);
     if (typeof d.user === 'boolean') S.user = d.user;
+    if (typeof d.euro === 'boolean') S.euro = d.euro;
   } catch(e) {}
 }
 
@@ -823,12 +834,43 @@ function lastXKey() { finishEntry(); lift(); setX(S.lastX); S.liftEnabled=true; 
 
 function setAngle(mode) { S.angleMode=mode; refreshAnn(); saveState(); }
 
-function powerOn() {
-  S.stack=[0,0,0,0]; S.lastX=0; S.entering=false; S.entryStr='';
-  S.shift=null; S.liftEnabled=false; S.pending=[];
-  S.displayMode='ALL'; S.displayDigits=4;
-  S.prgmMode=false; S.retStack=[];              // the program itself is kept (continuous memory)
-  refreshAnn(); refreshModeDisplay(); refreshDisplay();
+// ON switches the calculator off and back on. Continuous memory: stack, registers,
+// modes and program are kept, so it comes back exactly as it was switched off.
+function togglePower() {
+  stopProgram();
+  S.pending=[]; showPending();
+  S.hold=false; clearTimeout(S.msgTimer);
+  const combo=S.onCombo; S.onCombo=null;
+  S.off=!S.off;
+  const di=document.getElementById('displayInner');
+  di.classList.toggle('off', S.off); di.classList.remove('selftest');
+  if (S.off) { _drawCells({ neg:false, cells:Array.from({length:10},()=>({ch:' ',p:null})) }); return; }
+  refreshAnn();
+  // Real 11C: hold ON, press a key, release ON. Here: while off, press the key, then ON.
+  if (combo==='dot') { S.euro=!S.euro; refreshDisplay(); saveState(); return; }       // · ON: radix
+  if (combo==='sub') { memoryReset(); return; }                                        // − ON: Pr Error
+  if (combo==='mul') { selfTest(); return; }                                           // × ON: self-test
+  refreshDisplay();
+}
+
+// − ON : continuous memory reset (everything cleared, FIX 4, DEG), "Pr Error" until a key
+function memoryReset() {
+  Object.assign(S, { stack:[0,0,0,0], lastX:0, mem:{}, entering:false, entryStr:'', liftEnabled:false,
+    angleMode:'DEG', displayMode:'FIX', displayDigits:4, prgm:[], pc:0, prgmMode:false,
+    retStack:[], flags:[], user:false });
+  refreshAnn(); updateSidePanel();
+  renderRaw('Pr Error'); S.hold=true;
+}
+
+// × ON : self-test — "running", then every segment and annunciator lit until a key
+function selfTest() {
+  renderRaw(RUNNING);
+  S.hold=true;
+  S.msgTimer=setTimeout(() => {
+    if (!S.hold) return;
+    document.getElementById('displayInner').classList.add('selftest');
+    _drawCells({ neg:true, cells:Array.from({length:10},()=>({ch:'8',p:','})) });
+  }, 1500);
 }
 
 // ── Registers & extra functions ──────────────────────────────────────────────
@@ -982,7 +1024,7 @@ const KEYS = [
     a:()=>binaryOp((a,b)=>a-b) },
 
   // Row 4
-  { id:'on',   m:'ON',  fl:'',      gl:'',      a:powerOn },
+  { id:'on',   m:'ON',  fl:'',      gl:'',      a:null },
   { id:'f',    m:'f',   fl:'',      gl:'',      kb:'f',
     a:()=>{ S.shift=S.shift==='f'?null:'f'; refreshAnn(); } },
   { id:'g',    m:'g',   fl:'',      gl:'',      kb:'g',
@@ -1124,7 +1166,6 @@ function parseKeys(keys, opts={}) {
         return withArg(labelArg(a), 'gto', 'label');
       case 'gsb': return withArg(labelArg(a), 'gsb', 'label');
       case 'sst': return edit('sst');
-      case 'on':  return edit('on');
       case 'bsp': if (prgm) return edit('del'); break;
     }
     if (user && main in LETTERS) return gsbLetter();
@@ -1212,6 +1253,16 @@ function pressKey(id) {
   const el=document.querySelector(`.key[data-id="${id}"] .kf`);
   if (el) { el.parentElement.classList.add('pressed'); setTimeout(()=>el.parentElement.classList.remove('pressed'),120); }
 
+  if (id==='on') { togglePower(); return; }
+  if (S.off) {                                     // switched off: remember · − × for the next ON
+    S.onCombo = ['dot','sub','mul'].includes(id) ? id : null;
+    return;
+  }
+  if (S.hold) {                                    // a key clears Pr Error / the self-test
+    S.hold=false; clearTimeout(S.msgTimer);
+    document.getElementById('displayInner').classList.remove('selftest');
+    refreshAnn(); refreshDisplay(); return;
+  }
   if (S.running) { stopProgram(); return; }        // any key halts a running program
 
   if (id==='f'||id==='g') {                        // prefix keys: set, switch or cancel
@@ -1263,7 +1314,6 @@ function doEdit(op) {
     case 'goline':    if (op.n>len) { flashError(); return; } S.pc=op.n; break;
     case 'user':      S.user=!S.user; break;
     case 'mem':       showMessage('P-'+String(MAX_LINES-len).padStart(3,'0')+' r-.9'); return;
-    case 'on':        stopProgram(); powerOn(); return;
     case 'noop':      break;
   }
   refreshAnn(); refreshDisplay();
@@ -1462,8 +1512,8 @@ function pauseProgram() {                                  // PSE: show X for ab
 }
 
 function startBlink() {
-  stopBlink(); let on=true; renderRaw('running');
-  S.blink=setInterval(() => { on=!on; renderRaw(on ? 'running' : ''); }, 350);
+  stopBlink(); let on=true; renderRaw(RUNNING);
+  S.blink=setInterval(() => { on=!on; renderRaw(on ? RUNNING : ''); }, 350);
 }
 function stopBlink() { clearInterval(S.blink); S.blink=null; }
 

@@ -1,1 +1,4 @@
 dist/
+
+# HP manuals (reference only)
+*.pdf
