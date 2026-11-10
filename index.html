@@ -7,173 +7,224 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root { --m: 14px; --mt: 14px; }          /* window margins */
+html.app { --mt: 30px; }                   /* standalone app: room for the title-bar buttons */
 body {
-  background: #222;
+  background: #1a201d;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-family: Arial, sans-serif;
+  padding: var(--mt) var(--m) var(--m);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   user-select: none;
   overflow: hidden;
 }
 
 .wrapper {
-  --cw: clamp(390px, min(67vw, calc(90vh * 13 / 8)), 782px);
+  /* fill the window: width left after the side panel, or height × 1.6, whichever is smaller */
+  --cw: clamp(400px, min(100vw - 226px - 2 * var(--m), (100vh - var(--mt) - var(--m)) * 1.6), 1600px);
+  --u: calc(var(--cw) / 1200);          /* 1 unit = 1px of the 1200×750 reference */
   display: flex;
   align-items: flex-start;
   gap: 16px;
 }
 
-/* ── Calculator — ratio 13:8 ── */
+/* ══ Calculator — built on a 1200 × 750 grid measured from the reference ══ */
 .calculator {
+  position: relative;
   width: var(--cw);
-  aspect-ratio: 13 / 8;
-  background: linear-gradient(160deg, #1c1c1c 0%, #2e2e2e 50%, #1c1c1c 100%);
-  border-radius: calc(var(--cw) * 0.018);
-  padding: calc(var(--cw) * 0.028) calc(var(--cw) * 0.030) calc(var(--cw) * 0.022);
+  aspect-ratio: 1200 / 750;
+  background: #4b4b4d;
+  border-radius: calc(var(--u)*6);
   box-shadow:
-    0 0 0 1px #555,
-    0 8px 40px rgba(0,0,0,0.85),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--cw) * 0.012);
+    0 calc(var(--u)*18) calc(var(--u)*50) rgba(0,0,0,0.65),
+    0 calc(var(--u)*4) calc(var(--u)*10) rgba(0,0,0,0.5),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+  overflow: hidden;
 }
+.calculator > * { position: absolute; }
 
-/* ── Header ── */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  height: calc(var(--cw) * 0.040);
+/* Silver (brushed aluminium) top band */
+.silver {
+  left: calc(var(--u)*35); top: 0; width: calc(var(--u)*1130); height: calc(var(--u)*207);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.045) 0 1px, rgba(0,0,0,0.018) 1px 3px, rgba(255,255,255,0) 3px 5px),
+    linear-gradient(180deg, #a6a6a6 0, #a6a6a6 calc(var(--u)*21), #c9c9c9 calc(var(--u)*22), #dcdcdc calc(var(--u)*25), rgba(220,220,220,0) calc(var(--u)*120)),
+    linear-gradient(100deg, #e0e0e0 0%, #dadada 35%, #c4c4c4 70%, #b2b2b2 100%);
+  box-shadow: inset 0 calc(var(--u)*-2) 0 rgba(0,0,0,0.25);
 }
-.brand { color: #bbb; font-size: calc(var(--cw)*0.016); letter-spacing: calc(var(--cw)*0.004); font-weight: bold; }
-.logo-box {
-  background: #141414;
-  border: 1.5px solid #888;
-  border-radius: 3px;
-  padding: calc(var(--cw)*0.004) calc(var(--cw)*0.010);
-  display: flex; flex-direction: column; align-items: center; line-height: 1;
+.silver::after { /* soft shadow cast by the dark keyboard deck */
+  content:''; position:absolute; left:0; right:0; bottom:0; height:calc(var(--u)*10);
+  background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.12));
 }
-.logo-hp    { color: #ccc; font-size: calc(var(--cw)*0.022); font-weight: bold; }
-.logo-model { color: #ccc; font-size: calc(var(--cw)*0.018); }
-
-/* ── Display ── */
-.display-housing {
-  background: linear-gradient(180deg, #8a9a8a 0%, #b5c8b5 40%, #c8d8c8 70%, #9ab49a 100%);
-  border-radius: calc(var(--cw)*0.010);
-  padding: calc(var(--cw)*0.012) calc(var(--cw)*0.014) calc(var(--cw)*0.010);
-  border: 1px solid #555;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.35);
-  flex-shrink: 0;
-  height: calc(var(--cw) * 0.152);
+.lcd-bezel {
+  position: absolute;
+  left: calc(var(--u)*152); top: calc(var(--u)*46); width: calc(var(--u)*624); height: calc(var(--u)*126);
+  background: linear-gradient(180deg, #8a8783 0%, #918e8a 30%, #928f8b 100%);
+  border-radius: calc(var(--u)*8);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6), inset 0 1px 2px rgba(0,0,0,0.35);
 }
 .display-inner {
-  background: #c8d8b0;
-  border-radius: calc(var(--cw)*0.005);
-  height: 100%;
-  padding: calc(var(--cw)*0.005) calc(var(--cw)*0.012);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  position: absolute;
+  left: calc(var(--u)*30); top: calc(var(--u)*12); right: calc(var(--u)*26); bottom: calc(var(--u)*5);
+  background: linear-gradient(180deg, #8f917b 0%, #979982 8%, #999b84 60%, #96987f 100%);
+  border-radius: calc(var(--u)*3);
+  box-shadow: inset 0 calc(var(--u)*4) calc(var(--u)*5) rgba(40,40,20,0.30), inset 0 0 0 1px rgba(0,0,0,0.18);
+  overflow: hidden;
 }
-.display-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.annunciators { display: flex; gap: calc(var(--cw)*0.010); }
+#display-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.annunciators { position: absolute; left: 0; right: 0; top: 69%; height: 14%; }
 .ann {
-  font-size: calc(var(--cw)*0.013); color: #3a5030; opacity: 0.25;
-  font-weight: bold; letter-spacing: 0.5px; transition: opacity 0.1s;
+  position: absolute; top: 0;
+  font-size: calc(var(--u)*14.5); color: #1c1d14; opacity: 0; line-height: 1;
+  letter-spacing: -0.01em; transition: opacity 0.08s;
+  text-shadow: calc(var(--u)*1) calc(var(--u)*1.2) calc(var(--u)*0.8) rgba(40,40,20,0.25);
 }
-.ann.active { opacity: 1; }
+.ann.active { opacity: 0.9; }
 .display-mode {
-  font-family: 'Courier New', monospace;
-  font-size: calc(var(--cw)*0.020);
-  color: #2a4020;
-  font-weight: bold;
-  min-height: calc(var(--cw)*0.022);
-  letter-spacing: 2px;
+  position: absolute; left: calc(var(--u)*12); top: calc(var(--u)*4);
+  font-size: calc(var(--u)*13); color: #1c1d14; letter-spacing: 0.06em; white-space: nowrap; opacity: 0.85;
 }
-#display-canvas {
-  display: block;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
+@keyframes err { 0%,100%{filter:none} 50%{filter:brightness(1.15) sepia(0.6) hue-rotate(-40deg)} }
+.display-inner.error { animation:err 0.3s 2; }
+
+.logo-box {
+  position: absolute; right: calc(var(--u)*27); top: calc(var(--u)*36);   /* measured on a real 11C */
+  width: calc(var(--u)*86); height: calc(var(--u)*88);
+  filter: drop-shadow(0 calc(var(--u)*1.5) calc(var(--u)*1.5) rgba(0,0,0,0.45));
 }
+.logo-box img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--u)*3); }
 
-/* ── Keyboard grid — 10 cols × 4 rows, ENTER spans rows 3-4 col 6 ── */
-.keyboard {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: calc(var(--cw)*0.007);
-  min-height: 0;
+/* Dark keyboard deck + cream frame */
+.deck {
+  left: calc(var(--u)*35); top: calc(var(--u)*207); width: calc(var(--u)*1130); height: calc(var(--u)*526);
+  background: #363435;
+  box-shadow: inset 0 calc(var(--u)*6) calc(var(--u)*6) rgba(0,0,0,0.35);
 }
+.frame {
+  left: calc(var(--u)*47); top: calc(var(--u)*226); width: calc(var(--u)*1110); height: calc(var(--u)*493);
+  border: calc(var(--u)*7) solid #ebeae2;
+  border-radius: calc(var(--u)*11);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.35),
+              inset 0 1px 0 calc(var(--u)*0) rgba(255,255,255,0.4);
+}
+/* Bottom brand strip: square · HEWLETT·PACKARD · metal bar (replaces the frame's lower edge) */
+.frame { border-bottom-width: 0 !important; height: calc(var(--u)*486) !important;
+  border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+.brand-row { left: calc(var(--u)*47); top: calc(var(--u)*700); width: calc(var(--u)*1110); height: calc(var(--u)*24); }
+.brand-row > * { position: absolute; }
+.brand-sq { left: 0; top: calc(var(--u)*4); width: calc(var(--u)*16); height: calc(var(--u)*16);
+  background: linear-gradient(135deg, #f4f3ea, #c9c8c0); }
+/* Each letter sits on a fixed 32-unit pitch: H under ON … D under RCL, as on the real case */
+.brand-txt { left: calc(var(--u)*37); top: 0; display: flex; height: 100%; }
+.brand-txt span { width: calc(var(--u)*32); text-align: center; line-height: calc(var(--u)*24);
+  font-size: calc(var(--u)*23); font-weight: bold; color: #e6e6e2;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.brand-bar { left: calc(var(--u)*533); right: 0; top: calc(var(--u)*6); height: calc(var(--u)*12);
+  background: linear-gradient(90deg, #d4d3cc 0%, #cdbfbd 55%, #c9a9ab 100%);
+  border-radius: 0 0 calc(var(--u)*6) 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
 
-.key { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 0; min-height: 0; }
+.lip { left: calc(var(--u)*35); top: calc(var(--u)*733); width: calc(var(--u)*1130); height: calc(var(--u)*17); background: #3e3c3e; }
 
-/* Grid placement */
-.key[data-id="sqrtx"]{grid-column:1;grid-row:1} .key[data-id="ex"]   {grid-column:2;grid-row:1}
-.key[data-id="10x"]  {grid-column:3;grid-row:1} .key[data-id="yx"]   {grid-column:4;grid-row:1}
-.key[data-id="1x"]   {grid-column:5;grid-row:1} .key[data-id="chs"]  {grid-column:6;grid-row:1}
-.key[data-id="k7"]   {grid-column:7;grid-row:1} .key[data-id="k8"]   {grid-column:8;grid-row:1}
-.key[data-id="k9"]   {grid-column:9;grid-row:1} .key[data-id="div"]  {grid-column:10;grid-row:1}
+/* ══ Keys ══ */
+.keyboard { inset: 0; }
+.key {
+  position: absolute;
+  left: calc(var(--u) * (78 + var(--c) * 107.56));
+  top:  calc(var(--u) * (257 + var(--r) * 119.33));
+  width: calc(var(--u)*80); height: calc(var(--u)*71);
+  cursor: pointer;
+}
+.key[data-id="enter"] { height: calc(var(--u)*189); }
 
-.key[data-id="sst"]  {grid-column:1;grid-row:2} .key[data-id="gto"]  {grid-column:2;grid-row:2}
-.key[data-id="sin"]  {grid-column:3;grid-row:2} .key[data-id="cos"]  {grid-column:4;grid-row:2}
-.key[data-id="tan"]  {grid-column:5;grid-row:2} .key[data-id="eex"]  {grid-column:6;grid-row:2}
-.key[data-id="k4"]   {grid-column:7;grid-row:2} .key[data-id="k5"]   {grid-column:8;grid-row:2}
-.key[data-id="k6"]   {grid-column:9;grid-row:2} .key[data-id="mul"]  {grid-column:10;grid-row:2}
-
-.key[data-id="rs"]   {grid-column:1;grid-row:3} .key[data-id="gsb"]  {grid-column:2;grid-row:3}
-.key[data-id="rdown"]{grid-column:3;grid-row:3} .key[data-id="xy"]   {grid-column:4;grid-row:3}
-.key[data-id="bsp"]  {grid-column:5;grid-row:3}
-.key[data-id="enter"]{grid-column:6;grid-row:3/span 2}
-.key[data-id="k1"]   {grid-column:7;grid-row:3} .key[data-id="k2"]   {grid-column:8;grid-row:3}
-.key[data-id="k3"]   {grid-column:9;grid-row:3} .key[data-id="sub"]  {grid-column:10;grid-row:3}
-
-.key[data-id="on"]   {grid-column:1;grid-row:4} .key[data-id="f"]    {grid-column:2;grid-row:4}
-.key[data-id="g"]    {grid-column:3;grid-row:4} .key[data-id="sto"]  {grid-column:4;grid-row:4}
-.key[data-id="rcl"]  {grid-column:5;grid-row:4}
-.key[data-id="k0"]   {grid-column:7;grid-row:4} .key[data-id="dot"]  {grid-column:8;grid-row:4}
-.key[data-id="sigma"]{grid-column:9;grid-row:4} .key[data-id="add"]  {grid-column:10;grid-row:4}
-
-/* Key anatomy: f-label / face / g-label */
-.fl { font-size:calc(var(--cw)*0.0115); color:#e09000; font-weight:bold; height:calc(var(--cw)*0.016); line-height:calc(var(--cw)*0.016); text-align:center; width:100%; white-space:nowrap; overflow:hidden; }
+.fl {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(100% + var(--u)*2);
+  font-size: calc(var(--u)*19); color: #e8873a; white-space: nowrap; line-height: 1;
+  pointer-events: none;
+}
 .kf {
-  flex:1; width:100%; min-height:0;
-  background: linear-gradient(180deg,#3c3c3c 0%,#272727 55%,#1c1c1c 100%);
-  border-radius:calc(var(--cw)*0.006);
-  border:1px solid #4a4a4a; border-bottom:calc(var(--cw)*0.004) solid #0e0e0e;
-  box-shadow:0 2px 4px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.07);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  transition:all 0.04s; position:relative;
-  padding:calc(var(--cw)*0.003) calc(var(--cw)*0.002);
+  position: absolute; inset: 0;
+  border-radius: calc(var(--u)*5);
+  background: #000;
+  padding: calc(var(--u)*4);
+  box-shadow: 0 calc(var(--u)*3) calc(var(--u)*4) rgba(0,0,0,0.45);
+  transition: transform 0.05s;
 }
-.key:active .kf, .key.pressed .kf {
-  background:linear-gradient(180deg,#1a1a1a 0%,#252525 100%);
-  border-bottom-width:1px; transform:translateY(calc(var(--cw)*0.002));
-  box-shadow:0 1px 2px rgba(0,0,0,0.7);
+.kf-in {                               /* grey rim + face + recessed front strip */
+  width: 100%; height: 100%;
+  border-radius: calc(var(--u)*3);
+  border: calc(var(--u)*3) solid #616163; border-top-color: #6a6b6d; border-bottom: 0;
+  background: #4b4b4d;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.km { font-size:calc(var(--cw)*0.021); font-weight:bold; color:#e4e4e4; line-height:1.1; text-align:center; white-space:nowrap; }
-.ks { font-size:calc(var(--cw)*0.012); color:#999; line-height:1; text-align:center; margin-top:calc(var(--cw)*0.002); white-space:nowrap; }
-.kb-hint { position:absolute; bottom:calc(var(--cw)*0.003); right:calc(var(--cw)*0.003); font-size:calc(var(--cw)*0.010); color:rgba(255,255,255,0.18); pointer-events:none; line-height:1; }
-.gl { font-size:calc(var(--cw)*0.0115); color:#4a9aee; font-weight:bold; height:calc(var(--cw)*0.016); line-height:calc(var(--cw)*0.016); text-align:center; width:100%; white-space:nowrap; overflow:hidden; }
+.km {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #505052 0%, #4b4b4d 45%, #48484a 100%);
+  font-size: calc(var(--u)*27); color: #fafafa; line-height: 1; white-space: nowrap;
+  padding-top: calc(var(--u)*2);
+}
+.km sup { font-size: 0.62em; vertical-align: 0.62em; line-height: 0; }
+.km sub { font-size: 0.62em; vertical-align: -0.1em; line-height: 0; }
+.km .frac { font-size: 0.95em; }
+.ks {
+  flex: 0 0 calc(var(--u)*26);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #2f2d2e 0, #363435 calc(var(--u)*3), #363435 100%);
+  font-size: calc(var(--u)*15.5); color: #4fb0ef; line-height: 1; white-space: nowrap;
+  padding-bottom: calc(var(--u)*1);
+}
+.key[data-id="enter"] .ks { flex-basis: calc(var(--u)*28); }
+.key[data-id="enter"] .km { font-size: calc(var(--u)*24); }
+.key[data-id="enter"] .km span { text-align: center; line-height: 1.02; }
 
-.key[data-id="on"] .kf { background:linear-gradient(180deg,#2a2a2a 0%,#1a1a1a 100%); }
-.key[data-id="f"]  .kf { background:linear-gradient(180deg,#c08000 0%,#a06000 55%,#7a4800 100%); border-color:#906000; border-bottom-color:#503000; }
-.key[data-id="f"]  .km { color:#fff; }
-.key[data-id="g"]  .kf { background:linear-gradient(180deg,#3a7acc 0%,#2a5aaa 55%,#1a3a88 100%); border-color:#2a5aaa; border-bottom-color:#0a1a5a; }
-.key[data-id="g"]  .km { color:#fff; }
+.kb-hint {                              /* computer-keyboard shortcut, shown while Tab is held */
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.8);
+  display:flex; gap:calc(var(--u)*4); pointer-events:none; z-index:2;
+  opacity:0; transition: opacity .12s, transform .12s;
+}
+.kb-hint span {
+  min-width:calc(var(--u)*36); height:calc(var(--u)*38); padding:0 calc(var(--u)*7);
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(180deg,#fdfcf6,#e4e1d4); color:#1b1b1b;
+  border-radius:calc(var(--u)*6); border-bottom:calc(var(--u)*3) solid #a9a597;
+  box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(0,0,0,0.6);
+  font:bold calc(var(--u)*21)/1 "Helvetica Neue",Helvetica,Arial,sans-serif; white-space:nowrap;
+}
+html.show-hints .kb-hint { opacity:1; transform:translate(-50%,-50%) scale(1); }
+html.show-hints .key:not(:has(.kb-hint)) .kf-in { filter:brightness(0.5); }
+html.show-hints .key:has(.kb-hint) .kf-in > * { color: transparent; }
+
+/* pressed */
+.key.pressed .kf, .key:active .kf { transform: translateY(calc(var(--u)*2)); box-shadow: 0 calc(var(--u)*1) calc(var(--u)*1) rgba(0,0,0,0.5); }
+.key.pressed .kf-in, .key:active .kf-in { filter: brightness(0.82); }
+
+/* ON (no front strip), f (orange), g (blue) */
+.key[data-id="on"] .km { font-size: calc(var(--u)*24); }
+.key[data-id="f"] .kf-in { border-color:#de9a63; border-top-color:#e3a470; }
+.key[data-id="f"] .km { background:#e68c48; color:#1d1d1d; }
+.key[data-id="f"] .ks { background:#ac6f3f; }
+.key[data-id="g"] .kf-in { border-color:#61b8e7; border-top-color:#72c2ec; }
+.key[data-id="g"] .km { background:#4eace9; color:#1d1d1d; }
+.key[data-id="g"] .ks { background:#408cb9; }
 
 /* STO/RCL pending highlight */
-.key.sto-pending .kf { box-shadow:0 0 0 2px #e09000,0 2px 4px rgba(0,0,0,0.7); }
-.key.rcl-pending .kf { box-shadow:0 0 0 2px #4a9aee,0 2px 4px rgba(0,0,0,0.7); }
+.key.sto-pending .kf { box-shadow:0 0 0 calc(var(--u)*3) #e8873a; }
+.key.rcl-pending .kf { box-shadow:0 0 0 calc(var(--u)*3) #4fb0ef; }
 
-@keyframes err { 0%,100%{background:#c8d8b0} 50%{background:#e09090} }
-.display-inner.error { animation:err 0.3s 2; }
+/* CLEAR bracket over Σ, PRGM, REG, PREFIX */
+.clear-bracket {
+  position: absolute; pointer-events: none;
+  left: calc(var(--u)*182); width: calc(var(--u)*410); top: calc(var(--u)*462); height: calc(var(--u)*12);
+  border: calc(var(--u)*1.6) solid #e8873a; border-bottom: none;
+}
+.clear-bracket span {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -55%);
+  background: #363435; color: #e8873a; font-size: calc(var(--u)*17);
+  padding: 0 calc(var(--u)*8); line-height: 1;
+}
 
 /* ── Side panel ── */
 .side-panel {
@@ -189,7 +240,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: calc(var(--cw) * 8 / 13);
+  height: calc(var(--cw) * 750 / 1200);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #444 #1a1a1a;
@@ -216,6 +267,18 @@ body {
 .sp-reg-cell .sp-label { min-width: 28px; font-size: 13px; }
 .sp-reg-cell .sp-val   { font-size: 13px; }
 
+/* Program listing */
+.sp-prog { display: flex; flex-direction: column; font-size: 11px; }
+.sp-prog-row { display: grid; grid-template-columns: 30px 66px 1fr; gap: 4px; padding: 1px 4px;
+  border-radius: 3px; cursor: pointer; color: #888; line-height: 1.55; white-space: nowrap; }
+.sp-prog-row:hover { background: #262626; }
+.sp-prog-row .n { color: #555; }
+.sp-prog-row .c { color: #6f8a6a; }
+.sp-prog-row .m { color: #c8d8b0; overflow: hidden; text-overflow: ellipsis; }
+.sp-prog-row.cur { background: #33402b; }
+.sp-prog-row.cur .n, .sp-prog-row.cur .c { color: #c8d8b0; }
+.sp-prog-empty { color: #555; font-size: 11px; padding: 2px 4px; }
+
 /* Tooltip */
 .tooltip {
   position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
@@ -232,35 +295,36 @@ body {
 
   <!-- ── Calculator ── -->
   <div class="calculator">
-
-    <div class="header">
-      <div class="brand">HEWLETT · PACKARD</div>
-      <div class="logo-box">
-        <span class="logo-hp">hp</span>
-        <span class="logo-model">11C</span>
-      </div>
-    </div>
-
-    <div class="display-housing">
-      <div class="display-inner" id="displayInner">
-        <div class="display-top">
+    <div class="silver">
+      <div class="lcd-bezel">
+        <div class="display-inner" id="displayInner">
+          <div class="display-mode" id="display-mode"></div>
+          <canvas id="display-canvas"></canvas>
           <div class="annunciators">
-            <span class="ann" id="ann-f">f</span>
-            <span class="ann" id="ann-g">g</span>
-            <span class="ann" id="ann-run">PRGM</span>
-            <span class="ann" id="ann-user">USER</span>
-            <span class="ann" id="ann-rad">RAD</span>
-            <span class="ann" id="ann-grad">GRAD</span>
-          </div>
-          <div class="annunciators">
-            <span class="ann" id="ann-c">C</span>
+            <span class="ann" id="ann-user"  style="left:12.3%">USER</span>
+            <span class="ann" id="ann-f"     style="left:27.6%">f</span>
+            <span class="ann" id="ann-g"     style="left:32.6%">g</span>
+            <span class="ann"                style="left:38.6%">BEGIN</span>
+            <span class="ann" id="ann-grad"  style="left:55.7%">G</span>
+            <span class="ann" id="ann-rad"   style="left:57.6%">RAD</span>
+            <span class="ann"                style="left:65.2%">D.MY</span>
+            <span class="ann" id="ann-c"     style="left:79.5%">C</span>
+            <span class="ann" id="ann-run"   style="left:86.4%">PRGM</span>
           </div>
         </div>
-        <div class="display-mode" id="display-mode"></div>
-        <canvas id="display-canvas"></canvas>
+      </div>
+      <div class="logo-box">
+        <img src="data:image/webp;base64,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" alt="hp 11C">
       </div>
     </div>
-
+    <div class="deck"></div>
+    <div class="frame"></div>
+    <div class="lip"></div>
+    <div class="brand-row">
+      <span class="brand-sq"></span>
+      <span class="brand-txt"><span>H</span><span>E</span><span>W</span><span>L</span><span>E</span><span>T</span><span>T</span><span>·</span><span>P</span><span>A</span><span>C</span><span>K</span><span>A</span><span>R</span><span>D</span></span>
+      <span class="brand-bar"></span>
+    </div>
     <div class="keyboard" id="keyboard"></div>
   </div>
 
@@ -278,6 +342,7 @@ body {
     <div class="sp-section">
       <div class="sp-title">Last X</div>
       <div class="sp-row"><span class="sp-label">LX</span><span class="sp-val" id="sp-LX">0</span></div>
+      <div class="sp-row"><span class="sp-label">I</span><span class="sp-val" id="sp-I">0</span></div>
     </div>
 
     <div class="sp-section">
@@ -288,6 +353,11 @@ body {
     <div class="sp-section">
       <div class="sp-title">Mem R.0–R.9</div>
       <div class="sp-regs" id="sp-regs-dot"></div>
+    </div>
+
+    <div class="sp-section">
+      <div class="sp-title">Programme <span id="sp-prg-count"></span></div>
+      <div class="sp-prog" id="sp-prog"></div>
     </div>
 
   </div>
@@ -307,11 +377,19 @@ const S = {
   shift: null,         // null | 'f' | 'g'
   angleMode: 'DEG',
   liftEnabled: false,  // true → prochain nombre lift; false → remplace X (après ENTER)
-  stoMode: null,       // null|'sto'|'rcl'|'sto+'|'sto-'|'sto*'|'sto/'
-  stoDecimal: false,   // true → registre .n
   displayMode: 'ALL',  // 'ALL'|'FIX'|'SCI'|'ENG'
   displayDigits: 4,
-  fmtMode: null,       // null|'FIX'|'SCI'|'ENG' — attend le chiffre
+  pending: [],         // keys of an instruction still being typed (prefix, STO _, GTO .nn…)
+  // programming
+  prgm: [],            // program lines, each = the key sequence of one instruction
+  pc: 0,               // current line (0 = top of memory, "000-")
+  prgmMode: false,     // g P/R
+  running: false,
+  pausing: false,
+  retStack: [],        // GSB return lines (4 levels on the 11C)
+  flags: [],           // SF / CF / F?
+  user: false,         // f USER: A–E run GSB A–E without f
+  err: false,
 };
 
 const x  = () => S.stack[0];
@@ -375,24 +453,46 @@ const SEG_MAP = {
   '6':[1,0,1,1,1,1,1], '7':[1,1,1,0,0,0,0], '8':[1,1,1,1,1,1,1],
   '9':[1,1,1,1,0,1,1], '-':[0,0,0,0,0,0,1], 'E':[1,0,0,1,1,1,1],
   'e':[1,0,0,1,1,1,1], 'r':[0,0,0,0,1,0,1], 'o':[0,0,1,1,1,0,0],
-  ' ':[0,0,0,0,0,0,0],
+  ' ':[0,0,0,0,0,0,0], 'u':[0,0,1,1,1,0,0], 'n':[0,0,1,0,1,0,1],
+  'i':[0,0,1,0,0,0,0], 'g':[1,1,1,1,0,1,1], 'P':[1,1,0,0,1,1,1],
 };
 
 let _displayStr = '0';
 
+// Real Voyager LCD: a sign position, then 10 digit cells, each followed by a
+// punctuation mark that can be lit as "." or ",".  Numbers are left-justified;
+// an exponent occupies the last cells.
 function _parseCells(str) {
-  const cells = [];
-  for (const c of str) {
-    if (c === '.') {
-      if (cells.length > 0) cells[cells.length-1].dot = true;
-      else cells.push({ch:' ', dot:true});
-    } else {
-      cells.push({ch: c in SEG_MAP ? c : ' ', dot:false});
-    }
+  let neg = false, s = str;
+  if (s[0] === '-') { neg = true; s = s.slice(1); }
+  let mant = s, exp = null;
+  const ei = s.search(/e/);
+  if (ei >= 0 && /^[0-9.]/.test(s)) { mant = s.slice(0, ei); exp = s.slice(ei + 1); }
+  // digit grouping in the integer part, like the real calculator (1,500.0000)
+  if (/^\d+(\.\d*)?$/.test(mant) && exp === null) {
+    const [ip, fp] = mant.split('.');
+    mant = ip.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fp !== undefined ? '.' + fp : '');
   }
-  // pad left with ghost cells to always fill 11 positions
-  while (cells.length < 11) cells.unshift({ch:' ', dot:false});
-  return cells.slice(-11);
+  // European convention (real HP: ON + ·): decimal comma, dot for thousands → 1.500,0000
+  mant = mant.replace(/[.,]/g, c => c === '.' ? ',' : '.');
+  const cells = [];
+  for (const c of mant) {
+    if (c === '.' || c === ',') {
+      if (cells.length === 0) cells.push({ ch: ' ', p: null });
+      cells[cells.length - 1].p = c;
+    } else cells.push({ ch: c in SEG_MAP ? c : ' ', p: null });
+  }
+  if (exp !== null) {
+    const eneg = exp[0] === '-';
+    const ed = exp.replace(/^[+-]/, '').padStart(2, '0').slice(-2);
+    const tail = [{ ch: eneg ? '-' : ' ', p: null }, { ch: ed[0], p: null }, { ch: ed[1], p: null }];
+    const room = 10 - tail.length;
+    cells.length = Math.min(cells.length, room);
+    while (cells.length < room) cells.push({ ch: ' ', p: null });
+    cells.push(...tail);
+  }
+  while (cells.length < 10) cells.push({ ch: ' ', p: null });
+  return { neg, cells: cells.slice(0, 10) };
 }
 
 function _hex(ctx, x, y, w, h, c) {
@@ -404,30 +504,65 @@ function _hex(ctx, x, y, w, h, c) {
   ctx.closePath(); ctx.fill();
 }
 
-function _drawDigit(ctx, segs, x, y, DW, DH, on, off) {
-  const T  = DW * 0.14;    // épaisseur segment
-  const G  = T  * 0.18;    // espace entre segments
-  const C  = T  * 0.48;    // extrémités en pointe
-  const HL = DW - 2*(T+G);
-  const VH = DH/2 - T - 2*G;
-  // [sx, sy, sw, sh] for each segment
-  const defs = [
-    [T+G,    0,        HL, T ],  // a
-    [DW-T,   T+G,      T,  VH], // b
-    [DW-T,   DH/2+G,   T,  VH], // c
-    [T+G,    DH-T,     HL, T ], // d
-    [0,      DH/2+G,   T,  VH], // e
-    [0,      T+G,      T,  VH], // f
-    [T+G,    DH/2-T/2, HL, T ], // g
+// Voyager LCD digit: very thick segments meeting on 45° mitres, separated by
+// hair-line gaps, rectangular inner windows, slightly rounded outer corners.
+function _segPolys(w, h) {
+  const tv = w * 0.25;      // vertical segment thickness
+  const th = h * 0.153;     // horizontal segment thickness
+  const m  = h / 2, hm = th / 2;
+  return [
+    [[0,0],[w,0],[w-tv,th],[tv,th]],                               // a top
+    [[w,0],[w,m],[w-tv,m-hm],[w-tv,th]],                           // b top-right
+    [[w,m],[w,h],[w-tv,h-th],[w-tv,m+hm]],                         // c bottom-right
+    [[tv,h-th],[w-tv,h-th],[w,h],[0,h]],                           // d bottom
+    [[0,m],[tv,m+hm],[tv,h-th],[0,h]],                             // e bottom-left
+    [[0,0],[tv,th],[tv,m-hm],[0,m]],                               // f top-left
+    [[0,m],[tv,m-hm],[w-tv,m-hm],[w,m],[w-tv,m+hm],[tv,m+hm]],     // g middle
   ];
-  defs.forEach(([sx,sy,sw,sh], i) => {
-    ctx.fillStyle = segs[i] ? on : off;
-    _hex(ctx, x+sx, y+sy, sw, sh, C);
+}
+function _gapLines(w, h) {
+  const tv = w * 0.25, th = h * 0.153, m = h / 2, hm = th / 2;
+  return [
+    [0,0, tv,th], [w,0, w-tv,th], [0,h, tv,h-th], [w,h, w-tv,h-th],
+    [0,m, tv,m-hm], [0,m, tv,m+hm], [w,m, w-tv,m-hm], [w,m, w-tv,m+hm],
+  ];
+}
+function _drawDigit(ctx, segs, x, y, w, h, on) {
+  if (!segs.some(Boolean)) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath(); ctx.roundRect(0, 0, w, h, w * 0.045); ctx.clip();
+  ctx.fillStyle = on;
+  _segPolys(w, h).forEach((poly, i) => {
+    if (!segs[i]) return;
+    ctx.beginPath(); poly.forEach(([px,py], j) => j ? ctx.lineTo(px,py) : ctx.moveTo(px,py));
+    ctx.closePath(); ctx.fill();
   });
+  // cut the hair-line gaps between segments
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.lineWidth = w * 0.035; ctx.lineCap = 'square';
+  _gapLines(w, h).forEach(([x1,y1,x2,y2]) => { ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); });
+  ctx.restore();
 }
 
-function renderDisplay(str) {
-  _displayStr = str;
+function renderDisplay(str) { _displayStr = str; _drawCells(_parseCells(str)); }
+
+// Text as-is (letters, "." and "," as punctuation, no number formatting)
+function renderRaw(str) {
+  const cells = [];
+  for (const c of str) {
+    if ((c === '.' || c === ',') && cells.length) cells[cells.length-1].p = c;
+    else cells.push({ ch: c in SEG_MAP ? c : ' ', p: null });
+  }
+  while (cells.length < 10) cells.push({ ch: ' ', p: null });
+  _drawCells({ neg: false, cells: cells.slice(0, 10) });
+}
+
+let _lastCells = null;
+function _redraw() { if (_lastCells) _drawCells(_lastCells); }
+
+function _drawCells(parsed) {
+  _lastCells = parsed;
   const cv = document.getElementById('display-canvas');
   if (!cv) return;
   const rect = cv.getBoundingClientRect();
@@ -435,42 +570,69 @@ function renderDisplay(str) {
   const dpr = window.devicePixelRatio || 1;
   cv.width  = Math.round(rect.width  * dpr);
   cv.height = Math.round(rect.height * dpr);
-  const ctx = cv.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = rect.height;
+  const W = rect.width, H = rect.height;   // canvas = the whole LCD glass
 
-  const cells = _parseCells(str);
-  const DH   = H * 0.94;
-  const DW   = DH * 0.52;
-  const DOTR = DH * 0.052;
-  const DOTG = DW * 0.10;
-  const CELLW = DW + DOTG + DOTR*2;
-  const GAP   = DW * 0.16;
-  const ON  = '#1b2c0e';
-  const OFF = 'rgba(15,35,5,0.05)';
+  // Segments are drawn on an offscreen layer (so the gaps can be cut out),
+  // then composited onto the glass with the LCD's soft cast shadow.
+  const off = document.createElement('canvas');
+  off.width = cv.width; off.height = cv.height;
+  const o = off.getContext('2d');
+  o.scale(dpr, dpr);
 
-  let cx = W - cells.length*(CELLW+GAP) + GAP - 2;
-  const cy = (H - DH) / 2;
+  // Proportions measured on a real HP Voyager LCD
+  const DH = H * 0.42, DW = DH * 0.66;     // digit size (w/h of the photographed digit)
+  const PITCH = W * 0.0886;                // digit-to-digit
+  const X0 = W * 0.094, Y0 = H * 0.14;     // first digit, top of digits
+  const ON = '#26271f';
+  const SL = 0.075;                        // italic slant, pivot on the baseline
+  o.transform(1, 0, -SL, 1, SL*(Y0+DH), 0);
 
-  for (const {ch, dot} of cells) {
-    _drawDigit(ctx, SEG_MAP[ch]||SEG_MAP[' '], cx, cy, DW, DH, ON, OFF);
-    // decimal dot (bottom-right of digit cell)
-    const dx = cx + DW + DOTG + DOTR;
-    const dy = cy + DH - DOTR*1.1;
-    ctx.fillStyle = dot ? ON : OFF;
-    ctx.beginPath(); ctx.arc(dx, dy, DOTR, 0, Math.PI*2); ctx.fill();
-    cx += CELLW + GAP;
+  const { neg, cells } = parsed;
+  const th = DH * 0.153;
+  o.fillStyle = ON;
+  if (neg) {                               // minus: same shape as a middle segment
+    const mx = W*0.025, mw = W*0.036, my = Y0 + DH/2;
+    o.beginPath();
+    o.moveTo(mx, my); o.lineTo(mx+th*0.5, my-th/2); o.lineTo(mx+mw-th*0.5, my-th/2);
+    o.lineTo(mx+mw, my); o.lineTo(mx+mw-th*0.5, my+th/2); o.lineTo(mx+th*0.5, my+th/2);
+    o.closePath(); o.fill();
   }
+  cells.forEach(({ ch, p }, i) => {
+    const x = X0 + i * PITCH;
+    _drawDigit(o, SEG_MAP[ch] || SEG_MAP[' '], x, Y0, DW, DH, ON);
+    if (p) {                               // "." or "," after the digit
+      const s = th * 1.05;
+      const px = x + DW + W*0.007, py = Y0 + DH - s;
+      o.fillStyle = ON;
+      o.fillRect(px, py, s, s);
+      if (p === ',') {
+        o.beginPath();
+        o.moveTo(px + s, py + s*0.55);
+        o.lineTo(px + s*0.25, py + s*2.4);
+        o.lineTo(px - s*0.35, py + s*2.4);
+        o.lineTo(px + s*0.1, py + s*0.55);
+        o.closePath(); o.fill();
+      }
+    }
+  });
+
+  const ctx = cv.getContext('2d');
+  ctx.shadowColor = 'rgba(45,45,25,0.30)';
+  ctx.shadowOffsetX = DW*0.07*dpr; ctx.shadowOffsetY = DW*0.08*dpr; ctx.shadowBlur = DW*0.05*dpr;
+  ctx.drawImage(off, 0, 0);
 }
 
 // ── Display ───────────────────────────────────────────────────────────────────
 
 function refreshDisplay() {
-  renderDisplay(S.entering ? (S.entryStr||'0') : fmt(x()));
+  if (S.running && !S.pausing) return;          // the LCD shows "running"
+  if (S.prgmMode) renderPrgmLine();
+  else renderDisplay(S.entering ? (S.entryStr||'0') : fmt(x()));
   updateSidePanel();
 }
 
 function flashError() {
+  S.err = true;
   const d=document.getElementById('displayInner');
   d.classList.remove('error'); void d.offsetWidth; d.classList.add('error');
   setTimeout(()=>d.classList.remove('error'),700);
@@ -480,29 +642,32 @@ function flashError() {
 function refreshAnn() {
   document.getElementById('ann-f').classList.toggle('active',S.shift==='f');
   document.getElementById('ann-g').classList.toggle('active',S.shift==='g');
-  document.getElementById('ann-rad').classList.toggle('active',S.angleMode==='RAD');
+  document.getElementById('ann-rad').classList.toggle('active',S.angleMode==='RAD'||S.angleMode==='GRAD');
   document.getElementById('ann-grad').classList.toggle('active',S.angleMode==='GRAD');
+  document.getElementById('ann-run').classList.toggle('active',S.prgmMode);
+  document.getElementById('ann-user').classList.toggle('active',S.user);
 }
 
 function refreshModeDisplay() {
   const el=document.getElementById('display-mode');
-  if (S.fmtMode) { el.textContent=S.fmtMode+' _'; return; }
-  if (S.stoMode) {
-    let s=S.stoMode.replace('sto','STO').replace('rcl','RCL').toUpperCase();
-    if (S.stoDecimal) s+='.';
-    el.textContent=s+'_'; return;
-  }
-  el.textContent = S.displayMode==='ALL' ? '' : S.displayMode+' '+S.displayDigits;
+  // instruction being typed (STO _, FIX _, GTO .01_…); nothing otherwise, like the real LCD
+  const p=S.pending;
+  el.textContent = (p.length && !(p.length===1 && (p[0]==='f'||p[0]==='g'))) ? mnemonic(p)+' _' : '';
 }
 
 // ── Side panel ────────────────────────────────────────────────────────────────
 
+const fmtP = v => (typeof v==='string'?v:fmt(v)).replace('.', ',');   // decimal comma, like the LCD
+
 function updateSidePanel() {
-  document.getElementById('sp-T').textContent  = fmt(S.stack[3]);
-  document.getElementById('sp-Z').textContent  = fmt(S.stack[2]);
-  document.getElementById('sp-Y').textContent  = fmt(S.stack[1]);
-  document.getElementById('sp-X').textContent  = S.entering?(S.entryStr||'0'):fmt(S.stack[0]);
-  document.getElementById('sp-LX').textContent = fmt(S.lastX);
+  if (S.running && !S.pausing) return;
+  document.getElementById('sp-I').textContent = fmtP(S.mem.I ?? 0);
+  renderListing();
+  document.getElementById('sp-T').textContent  = fmtP(S.stack[3]);
+  document.getElementById('sp-Z').textContent  = fmtP(S.stack[2]);
+  document.getElementById('sp-Y').textContent  = fmtP(S.stack[1]);
+  document.getElementById('sp-X').textContent  = S.entering?fmtP(S.entryStr||'0'):fmtP(S.stack[0]);
+  document.getElementById('sp-LX').textContent = fmtP(S.lastX);
 
   function fillRegs(containerId, keys) {
     const el=document.getElementById(containerId);
@@ -511,7 +676,7 @@ function updateSidePanel() {
       const v=S.mem[k]??0;
       const cell=document.createElement('div');
       cell.className='sp-reg-cell'+(v!==0?' sp-highlight':'');
-      cell.innerHTML=`<span class="sp-label">R${k}</span><span class="sp-val">${fmt(v)}</span>`;
+      cell.innerHTML=`<span class="sp-label">R${k}</span><span class="sp-val">${fmtP(v)}</span>`;
       el.appendChild(cell);
     });
   }
@@ -526,20 +691,32 @@ const LS_KEY = 'hp11c';
 
 function saveState() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({
+    var json = JSON.stringify({
       stack: S.stack,
       lastX: S.lastX,
       mem: S.mem,
       angleMode: S.angleMode,
       displayMode: S.displayMode,
       displayDigits: S.displayDigits,
-    }));
+      liftEnabled: S.liftEnabled,
+      entering: S.entering,
+      entryStr: S.entryStr,
+      prgm: S.prgm,
+      pc: S.pc,
+      flags: S.flags,
+      user: S.user,
+    });
+    localStorage.setItem(LS_KEY, json);
   } catch(e) {}
+  // standalone app: also hand the state to macOS (kept in the app's preferences)
+  try { window.webkit?.messageHandlers?.save?.postMessage(json); } catch(e) {}
 }
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    // the app injects its saved state before the page loads; the browser uses localStorage
+    let raw = window.__HP11C_STATE || null;
+    try { raw = raw || localStorage.getItem(LS_KEY); } catch(e) {}
     if (!raw) return;
     const d = JSON.parse(raw);
     if (Array.isArray(d.stack) && d.stack.length===4) S.stack = d.stack.map(Number);
@@ -548,6 +725,14 @@ function loadState() {
     if (['DEG','RAD','GRAD'].includes(d.angleMode)) S.angleMode = d.angleMode;
     if (['ALL','FIX','SCI','ENG'].includes(d.displayMode)) S.displayMode = d.displayMode;
     if (typeof d.displayDigits === 'number') S.displayDigits = d.displayDigits;
+    if (typeof d.liftEnabled === 'boolean') S.liftEnabled = d.liftEnabled;
+    if (d.entering === true && typeof d.entryStr === 'string' && d.entryStr) {
+      S.entering = true; S.entryStr = d.entryStr;
+    }
+    if (Array.isArray(d.prgm)) S.prgm = d.prgm.filter(l => Array.isArray(l) && l.length && l.every(k => typeof k === 'string'));
+    if (Number.isInteger(d.pc) && d.pc >= 0 && d.pc <= S.prgm.length) S.pc = d.pc;
+    if (Array.isArray(d.flags)) S.flags = d.flags.map(Boolean);
+    if (typeof d.user === 'boolean') S.user = d.user;
   } catch(e) {}
 }
 
@@ -636,56 +821,26 @@ function rollUp() {
 function xySwap() { finishEntry(); const t=S.stack[0]; S.stack[0]=S.stack[1]; S.stack[1]=t; refreshDisplay(); }
 function lastXKey() { finishEntry(); lift(); setX(S.lastX); S.liftEnabled=true; refreshDisplay(); }
 
-function setAngle(mode) { S.angleMode=mode; refreshAnn(); }
+function setAngle(mode) { S.angleMode=mode; refreshAnn(); saveState(); }
 
 function powerOn() {
   S.stack=[0,0,0,0]; S.lastX=0; S.entering=false; S.entryStr='';
-  S.shift=null; S.liftEnabled=false; S.stoMode=null; S.stoDecimal=false;
-  S.displayMode='ALL'; S.displayDigits=4; S.fmtMode=null;
+  S.shift=null; S.liftEnabled=false; S.pending=[];
+  S.displayMode='ALL'; S.displayDigits=4;
+  S.prgmMode=false; S.retStack=[];              // the program itself is kept (continuous memory)
   refreshAnn(); refreshModeDisplay(); refreshDisplay();
 }
 
-// ── FIX / SCI / ENG machine d'états ──────────────────────────────────────────
-
-function enterFmtMode(mode) {
-  S.fmtMode=mode; refreshModeDisplay();
-}
-
-function handleFmtMode(id) {
-  if (id in DIGIT_IDS) {
-    S.displayMode=S.fmtMode;
-    S.displayDigits=parseInt(DIGIT_IDS[id]);
-    S.fmtMode=null;
-    refreshModeDisplay(); refreshDisplay();
-    return true;
-  }
-  // toute autre touche annule
-  S.fmtMode=null; refreshModeDisplay();
-  return false;
-}
-
-// ── STO / RCL machine d'états ─────────────────────────────────────────────────
-
-function enterStoMode(mode) {
-  finishEntry();
-  S.stoMode=mode; S.stoDecimal=false;
-  refreshModeDisplay();
-  highlightStoKey();
-}
-
-function highlightStoKey() {
-  document.querySelector('.key[data-id="sto"]')?.classList.toggle('sto-pending', S.stoMode==='sto'||S.stoMode?.startsWith('sto'));
-  document.querySelector('.key[data-id="rcl"]')?.classList.toggle('rcl-pending', S.stoMode==='rcl');
-}
-
-function cancelStoMode() {
-  S.stoMode=null; S.stoDecimal=false;
-  refreshModeDisplay();
-  document.querySelector('.key[data-id="sto"]')?.classList.remove('sto-pending');
-  document.querySelector('.key[data-id="rcl"]')?.classList.remove('rcl-pending');
-}
+// ── Registers & extra functions ──────────────────────────────────────────────
 
 const DIGIT_IDS = {k0:'0',k1:'1',k2:'2',k3:'3',k4:'4',k5:'5',k6:'6',k7:'7',k8:'8',k9:'9'};
+
+// '(i)' = register addressed by I: 0–9 → R0–R9, 10–19 → R.0–R.9
+function resolveReg(reg) {
+  if (reg !== '(i)') return reg;
+  const n = Math.trunc(Math.abs(S.mem.I ?? 0));
+  return n <= 9 ? String(n) : n <= 19 ? '.' + (n - 10) : null;
+}
 
 function executeStorageOp(mode, regKey) {
   const cur=S.mem[regKey]??0;
@@ -697,117 +852,153 @@ function executeStorageOp(mode, regKey) {
     case 'sto*': S.mem[regKey]=cur*xv; break;
     case 'sto/': if (xv===0){flashError();return;} S.mem[regKey]=cur/xv; break;
     case 'rcl':
-      lift(); setX(S.mem[regKey]??0); S.liftEnabled=true;
+      if (S.liftEnabled) lift();
+      setX(cur); S.liftEnabled=true;
       refreshDisplay(); break;
   }
+  if (mode!=='rcl') S.liftEnabled=true;
   updateSidePanel();
 }
 
-// Returns true if key was consumed by sto mode
-function handleStoMode(id) {
-  // Decimal → switch to .n registers
-  if (id==='dot') {
-    S.stoDecimal=true; refreshModeDisplay(); return true;
-  }
-  // Arithmetic modifiers (only when mode is exactly 'sto')
-  if (S.stoMode==='sto') {
-    const mods={add:'sto+',sub:'sto-',mul:'sto*',div:'sto/'};
-    if (id in mods) { S.stoMode=mods[id]; refreshModeDisplay(); return true; }
-  }
-  // Digit → execute
-  if (id in DIGIT_IDS) {
-    const regKey=(S.stoDecimal?'.':'')+DIGIT_IDS[id];
-    const mode=S.stoMode;
-    cancelStoMode();
-    executeStorageOp(mode, regKey);
-    return true;
-  }
-  // ON cancels
-  if (id==='on') { cancelStoMode(); return false; }
-  // Any other key: cancel silently, let it be handled normally
-  cancelStoMode();
-  return false;
+// result replaces X, Y is kept (%, Δ%)
+function keepYOp(fn) {
+  finishEntry(); S.lastX=x();
+  const r=fn(y(),x());
+  if (!isFinite(r)||isNaN(r)) { flashError(); return; }
+  setX(r); S.liftEnabled=true; refreshDisplay();
 }
+
+function fact(n) {
+  if (n<0 || n>170 || n!==Math.floor(n)) return NaN;
+  let r=1; for (let i=2;i<=n;i++) r*=i; return r;
+}
+
+function toRect() {               // →R : (r, θ) → (x, y)
+  finishEntry(); const r=x(), t=toRadMode(y()); S.lastX=r;
+  setX(r*Math.cos(t)); S.stack[1]=r*Math.sin(t); S.liftEnabled=true; refreshDisplay();
+}
+function toPolar() {              // →P : (x, y) → (r, θ)
+  finishEntry(); const xv=x(), yv=y(); S.lastX=xv;
+  setX(Math.hypot(xv,yv)); S.stack[1]=fromRadMode(Math.atan2(yv,xv)); S.liftEnabled=true; refreshDisplay();
+}
+function swapXI() {
+  finishEntry(); const t=S.mem.I??0; S.mem.I=x(); setX(t); S.liftEnabled=true; refreshDisplay();
+}
+function swapXInd() {
+  finishEntry(); const r=resolveReg('(i)'); if (!r) { flashError(); return; }
+  const t=S.mem[r]??0; S.mem[r]=x(); setX(t); S.liftEnabled=true; refreshDisplay();
+}
+const toHMS = h => { const s=Math.sign(h); h=Math.abs(h);
+  const H=Math.floor(h), m=(h-H)*60, M=Math.floor(m+1e-9), sec=(m-M)*60; return s*(H+M/100+sec/10000); };
+const fromHMS = v => { const s=Math.sign(v); v=Math.abs(v);
+  const H=Math.floor(v), mm=Math.floor((v-H)*100+1e-9), ss=((v-H)*100-mm)*100; return s*(H+mm/60+ss/3600); };
+
+// Statistics: R0 n, R1 Σx, R2 Σx², R3 Σy, R4 Σy², R5 Σxy (as on the 11C)
+const R = i => S.mem[String(i)] ?? 0;
+function sigmaAcc(sgn) {
+  finishEntry(); const xv=x(), yv=y();
+  S.mem['0']=R(0)+sgn;       S.mem['1']=R(1)+sgn*xv; S.mem['2']=R(2)+sgn*xv*xv;
+  S.mem['3']=R(3)+sgn*yv;    S.mem['4']=R(4)+sgn*yv*yv; S.mem['5']=R(5)+sgn*xv*yv;
+  S.lastX=xv; setX(R(0)); S.liftEnabled=false; refreshDisplay();
+}
+function statPair(fn) {           // puts fn()=[x,y] into X and Y, stack lifts
+  finishEntry(); const r=fn(); if (!r || !r.every(isFinite)) { flashError(); return; }
+  lift(); lift(); setX(r[0]); S.stack[1]=r[1]; S.liftEnabled=true; refreshDisplay();
+}
+const statM = () => R(0)*R(2)-R(1)**2, statN = () => R(0)*R(4)-R(3)**2, statP = () => R(0)*R(5)-R(1)*R(3);
+const meanXY = () => R(0) ? [R(1)/R(0), R(3)/R(0)] : null;
+const sdevXY = () => R(0)>1 ? [Math.sqrt(statM()/(R(0)*(R(0)-1))), Math.sqrt(statN()/(R(0)*(R(0)-1)))] : null;
+const linReg = () => { const M=statM(); if (!R(0)||!M) return null; const m=statP()/M; return [(R(3)-m*R(1))/R(0), m]; };
+function estimate() {             // ŷ,r : estimate for the x in X, correlation in Y
+  finishEntry(); const lr=linReg(), M=statM(), N=statN();
+  if (!lr || !(M*N>0)) { flashError(); return; }
+  const xv=x(); S.lastX=xv; lift(); setX(lr[1]*xv+lr[0]); S.stack[1]=statP()/Math.sqrt(M*N);
+  S.liftEnabled=true; refreshDisplay();
+}
+function clearSigma() { for (let i=0;i<=5;i++) delete S.mem[String(i)]; S.stack=[0,0,0,0]; refreshDisplay(); }
 
 // ── Key definitions ───────────────────────────────────────────────────────────
 
 const KEYS = [
-  // Row 1
-  { id:'sqrtx',m:'√x̄', s:'',     fl:'A',    gl:'x²',
+  // Row 1   (fl = libellé f doré au-dessus, gl = libellé g bleu sur la face)
+  { id:'sqrtx',m:'√x',  fl:'A',     gl:'x²',    kb:'a',
     a:()=>unaryOp(v=>Math.sqrt(v)),              ga:()=>unaryOp(v=>v*v) },
-  { id:'ex',   m:'eˣ',  s:'',     fl:'B',    gl:'LN',
+  { id:'ex',   m:'e<sup>x</sup>', fl:'B',     gl:'LN',    kb:'b',
     a:()=>unaryOp(v=>Math.exp(v)),               ga:()=>unaryOp(v=>Math.log(v)) },
-  { id:'10x',  m:'10ˣ', s:'',     fl:'C',    gl:'LOG',
+  { id:'10x',  m:'10<sup>x</sup>', fl:'C',     gl:'LOG',   kb:'c',
     a:()=>unaryOp(v=>Math.pow(10,v)),            ga:()=>unaryOp(v=>Math.log10(v)) },
-  { id:'yx',   m:'yˣ',  s:'',     fl:'D',    gl:'%',     kb:'^',
-    a:()=>binaryOp((a,b)=>Math.pow(a,b)),        ga:()=>binaryOp((a,b)=>a*b/100) },
-  { id:'1x',   m:'1/x', s:'',     fl:'E',    gl:'Δ%',
-    a:()=>unaryOp(v=>1/v) },
-  { id:'chs',  m:'CHS', s:'',     fl:'π',    gl:'ABS',   kb:'c',
+  { id:'yx',   m:'Y<sup>x</sup>', fl:'D',     gl:'%',     kb:'d',
+    a:()=>binaryOp((a,b)=>Math.pow(a,b)),        ga:()=>keepYOp((a,b)=>a*b/100) },
+  { id:'1x',   m:'<span class="frac"><sup>1</sup>/<sub>x</sub></span>', fl:'E',     gl:'Δ%',    kb:'e',
+    a:()=>unaryOp(v=>1/v),                       ga:()=>keepYOp((a,b)=>(b-a)/a*100) },
+  { id:'chs',  m:'CHS', fl:'π',     gl:'ABS',   kb:'C',
     a:chsKey,
     fa:()=>{ lift(); setX(Math.PI); S.liftEnabled=true; refreshDisplay(); },
     ga:()=>unaryOp(v=>Math.abs(v)) },
-  { id:'k7',   m:'7',   s:'',     fl:'FIX',  gl:'DEG',   kb:'7',
-    a:()=>digitKey(7),  fa:()=>enterFmtMode('FIX'),  ga:()=>setAngle('DEG') },
-  { id:'k8',   m:'8',   s:'',     fl:'SCI',  gl:'RAD',   kb:'8',
-    a:()=>digitKey(8),  fa:()=>enterFmtMode('SCI'),  ga:()=>setAngle('RAD') },
-  { id:'k9',   m:'9',   s:'',     fl:'ENG',  gl:'GRD',   kb:'9',
-    a:()=>digitKey(9),  fa:()=>enterFmtMode('ENG'),  ga:()=>setAngle('GRAD') },
-  { id:'div',  m:'÷',   s:'',     fl:'x≤y',  gl:'x<0',   kb:'/',
+  { id:'k7',   m:'7',   fl:'FIX',   gl:'DEG',   kb:'7',
+    a:()=>digitKey(7),  ga:()=>setAngle('DEG') },
+  { id:'k8',   m:'8',   fl:'SCI',   gl:'RAD',   kb:'8',
+    a:()=>digitKey(8),  ga:()=>setAngle('RAD') },
+  { id:'k9',   m:'9',   fl:'ENG',   gl:'GRD',   kb:'9',
+    a:()=>digitKey(9),  ga:()=>setAngle('GRAD') },
+  { id:'div',  m:'÷',   fl:'x≤y',   gl:'x<0',   kb:'/',
     a:()=>binaryOp((a,b)=>a/b) },
 
   // Row 2
-  { id:'sst',  m:'SST', s:'BST',  fl:'LBL',  gl:'',      a:null },
-  { id:'gto',  m:'GTO', s:'HYP⁻¹',fl:'HYP', gl:'',      a:null },
-  { id:'sin',  m:'SIN', s:'SIN⁻¹',fl:'xẑ(i)',gl:'',
-    a:()=>unaryOp(v=>Math.sin(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.asin(v))) },
-  { id:'cos',  m:'COS', s:'COS⁻¹',fl:'(i)',  gl:'',
+  { id:'sst',  m:'SST', fl:'LBL',   gl:'BST',   a:null },
+  { id:'gto',  m:'GTO', fl:'HYP',   gl:'HYP⁻¹', a:null },
+  { id:'sin',  m:'SIN', fl:'x↔(i)', gl:'SIN⁻¹',
+    a:()=>unaryOp(v=>Math.sin(toRadMode(v))),    fa:swapXInd, ga:()=>unaryOp(v=>fromRadMode(Math.asin(v))) },
+  { id:'cos',  m:'COS', fl:'(i)',   gl:'COS⁻¹',
     a:()=>unaryOp(v=>Math.cos(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.acos(v))) },
-  { id:'tan',  m:'TAN', s:'TAN⁻¹',fl:'I',    gl:'',
+  { id:'tan',  m:'TAN', fl:'I',     gl:'TAN⁻¹',
     a:()=>unaryOp(v=>Math.tan(toRadMode(v))),    ga:()=>unaryOp(v=>fromRadMode(Math.atan(v))) },
-  { id:'eex',  m:'EEX', s:'→P',   fl:'→R',   gl:'',      kb:'e',  a:eexKey },
-  { id:'k4',   m:'4',   s:'SF',   fl:'xẑI',  gl:'',      kb:'4',  a:()=>digitKey(4) },
-  { id:'k5',   m:'5',   s:'CF',   fl:'DSE',  gl:'',      kb:'5',  a:()=>digitKey(5) },
-  { id:'k6',   m:'6',   s:'F?',   fl:'ISG',  gl:'',      kb:'6',  a:()=>digitKey(6) },
-  { id:'mul',  m:'×',   s:'',     fl:'x>y',  gl:'x>0',   kb:'*',
+  { id:'eex',  m:'EEX', fl:'→R',    gl:'→P',    kb:'E',  a:eexKey, fa:toRect, ga:toPolar },
+  { id:'k4',   m:'4',   fl:'x↔I',   gl:'SF',    kb:'4',  a:()=>digitKey(4), fa:swapXI },
+  { id:'k5',   m:'5',   fl:'DSE',   gl:'CF',    kb:'5',  a:()=>digitKey(5) },
+  { id:'k6',   m:'6',   fl:'ISG',   gl:'F?',    kb:'6',  a:()=>digitKey(6) },
+  { id:'mul',  m:'×',   fl:'x>y',   gl:'x>0',   kb:'*',
     a:()=>binaryOp((a,b)=>a*b) },
 
-  // Row 3
-  { id:'rs',   m:'R/S', s:'P/R',  fl:'PSE',  gl:'',      a:null },
-  { id:'gsb',  m:'GSB', s:'RTN',  fl:'Σ',    gl:'',      a:null },
-  { id:'rdown',m:'R↓',  s:'R↑',   fl:'PRGM', gl:'',
+  // Row 3   (Σ, PRGM, REG, PREFIX sont sous l'accolade CLEAR)
+  { id:'rs',   m:'R/S', fl:'PSE',   gl:'P/R',   a:null },
+  { id:'gsb',  m:'GSB', fl:'Σ',     gl:'RTN',   a:null, fa:clearSigma },
+  { id:'rdown',m:'R↓',  fl:'PRGM',  gl:'R↑',
     a:rollDown, ga:rollUp },
-  { id:'xy',   m:'x≷y', s:'RND',  fl:'REG',  gl:'',      a:xySwap },
-  { id:'bsp',  m:'←',   s:'CLX',  fl:'PRFX', gl:'',      kb:'Backspace',
+  { id:'xy',   m:'x↔y', fl:'REG',   gl:'RND',   a:xySwap,
+    fa:()=>{ S.mem={}; refreshDisplay(); },
+    ga:()=>unaryOp(v=>Number(fmt(v))) },
+  { id:'bsp',  m:'←',   fl:'PREFIX',gl:'CLx',   kb:'Backspace',
     a:backspaceKey, ga:clxKey },
-  { id:'enter',m:'ENTER',s:'',    fl:'',     gl:'LSTX',  kb:'Enter',
-    a:enterKey, ga:lastXKey },
-  { id:'k1',   m:'1',   s:'Cy,x', fl:'RAN#', gl:'',      kb:'1',
-    a:()=>digitKey(1),
+  { id:'enter',m:'E<br>N<br>T<br>E<br>R',fl:'RAN#', gl:'LSTx',  kb:'Enter',
+    a:enterKey, ga:lastXKey,
     fa:()=>{ lift(); setX(Math.random()); S.liftEnabled=true; refreshDisplay(); } },
-  { id:'k2',   m:'2',   s:'→H',   fl:'Py,x', gl:'',      kb:'2',  a:()=>digitKey(2) },
-  { id:'k3',   m:'3',   s:'→DEG', fl:'→H.MS',gl:'',      kb:'3',  a:()=>digitKey(3) },
-  { id:'sub',  m:'−',   s:'',     fl:'x≠y',  gl:'x≠0',   kb:'-',
+  { id:'k1',   m:'1',   fl:'Py,x',  gl:'Cy,x',  kb:'1',  a:()=>digitKey(1),
+    fa:()=>binaryOp((a,b)=>fact(a)/fact(a-b)), ga:()=>binaryOp((a,b)=>fact(a)/fact(a-b)/fact(b)) },
+  { id:'k2',   m:'2',   fl:'→H.MS', gl:'→H',    kb:'2',  a:()=>digitKey(2), fa:()=>unaryOp(toHMS), ga:()=>unaryOp(fromHMS) },
+  { id:'k3',   m:'3',   fl:'→RAD',  gl:'→DEG',  kb:'3',  a:()=>digitKey(3),
+    fa:()=>unaryOp(v=>v*Math.PI/180), ga:()=>unaryOp(v=>v*180/Math.PI) },
+  { id:'sub',  m:'−',   fl:'x≠y',   gl:'x≠0',   kb:'-',
     a:()=>binaryOp((a,b)=>a-b) },
 
   // Row 4
-  { id:'on',   m:'ON',  s:'',     fl:'',     gl:'',      a:powerOn },
-  { id:'f',    m:'f',   s:'',     fl:'',     gl:'',
+  { id:'on',   m:'ON',  fl:'',      gl:'',      a:powerOn },
+  { id:'f',    m:'f',   fl:'',      gl:'',      kb:'f',
     a:()=>{ S.shift=S.shift==='f'?null:'f'; refreshAnn(); } },
-  { id:'g',    m:'g',   s:'',     fl:'',     gl:'',
+  { id:'g',    m:'g',   fl:'',      gl:'',      kb:'g',
     a:()=>{ S.shift=S.shift==='g'?null:'g'; refreshAnn(); } },
-  { id:'sto',  m:'STO', s:'INT',  fl:'FRAC', gl:'',
-    a:()=>enterStoMode('sto'),
+  { id:'sto',  m:'STO', fl:'FRAC',  gl:'INT',
+    a:null,
     fa:()=>unaryOp(v=>v-Math.trunc(v)),
     ga:()=>unaryOp(v=>Math.trunc(v)) },
-  { id:'rcl',  m:'RCL', s:'MEM',  fl:'USER', gl:'',
-    a:()=>enterStoMode('rcl') },
-  { id:'k0',   m:'0',   s:'x̄',   fl:'',     gl:'x=0',   kb:'0',  a:()=>digitKey(0) },
-  { id:'dot',  m:'·',   s:'s',    fl:'',     gl:'',      kb:'.',  a:dotKey },
-  { id:'sigma',m:'Σ+',  s:'Σ−',   fl:'',     gl:'n!',
-    a:null,
-    ga:()=>{ const n=Math.round(x()); if(n<0||n>170){flashError();return;} let r=1; for(let i=2;i<=n;i++)r*=i; unaryOp(()=>r); } },
-  { id:'add',  m:'+',   s:'',     fl:'x=y',  gl:'x=0',   kb:'+',
+  { id:'rcl',  m:'RCL', fl:'USER',  gl:'MEM',
+    a:null },
+  { id:'k0',   m:'0',   fl:'x!',    gl:'x̄',     kb:'0',  a:()=>digitKey(0),
+    fa:()=>unaryOp(v=>fact(Math.round(v))), ga:()=>statPair(meanXY) },
+  { id:'dot',  m:'·',   fl:'ŷ,r',   gl:'s',     kb:'.',  a:dotKey, fa:estimate, ga:()=>statPair(sdevXY) },
+  { id:'sigma',m:'Σ+',  fl:'L.R.',  gl:'Σ−',
+    a:()=>sigmaAcc(1), ga:()=>sigmaAcc(-1), fa:()=>statPair(linReg) },
+  { id:'add',  m:'+',   fl:'x=y',   gl:'x=0',   kb:'+',
     a:()=>binaryOp((a,b)=>a+b) },
 ];
 
@@ -815,27 +1006,40 @@ const KEYS = [
 
 function buildKeyboard() {
   const kb=document.getElementById('keyboard');
+  let col=0,row=0;
   KEYS.forEach(k=>{
+    if (row===3 && col===5) col++;           // ENTER occupies col 6 of row 4
     const wrap=document.createElement('div');
     wrap.className='key'; wrap.dataset.id=k.id;
+    wrap.style.setProperty('--c',col); wrap.style.setProperty('--r',row);
+    if (++col===10) { col=0; row++; }
 
     const fl=document.createElement('div'); fl.className='fl'; fl.textContent=k.fl||''; wrap.appendChild(fl);
 
     const face=document.createElement('div'); face.className='kf';
-    const main=document.createElement('div'); main.className='km'; main.textContent=k.m; face.appendChild(main);
-    if (k.s) { const sub=document.createElement('div'); sub.className='ks'; sub.textContent=k.s; face.appendChild(sub); }
-    if (k.kb) {
+    const inner=document.createElement('div'); inner.className='kf-in';
+    const main=document.createElement('div'); main.className='km'; main.innerHTML='<span>'+k.m+'</span>'; inner.appendChild(main);
+    if (k.id!=='on') { const sub=document.createElement('div'); sub.className='ks'; sub.textContent=k.gl||''; inner.appendChild(sub); }
+    face.appendChild(inner);
+    // every computer key that triggers this HP key (from the KB map)
+    const shortcuts=Object.keys(KB).filter(c=>KB[c]===k.id);
+    if (shortcuts.length) {
       const hint=document.createElement('div'); hint.className='kb-hint';
-      hint.textContent=k.kb==='Enter'?'⏎':k.kb==='Backspace'?'⌫':k.kb; face.appendChild(hint);
+      shortcuts.forEach(c=>{
+        const s=document.createElement('span');
+        s.textContent = c==='Enter'?'⏎' : c==='Backspace'?'⌫' : /^[A-Z]$/.test(c)?'⇧'+c : c.toUpperCase();
+        hint.appendChild(s);
+      });
+      face.appendChild(hint);
     }
     wrap.appendChild(face);
-
-    const gl=document.createElement('div'); gl.className='gl'; gl.textContent=k.gl||''; wrap.appendChild(gl);
 
     wrap.addEventListener('mousedown',e=>{e.preventDefault();pressKey(k.id);});
     wrap.addEventListener('touchstart',e=>{e.preventDefault();pressKey(k.id);},{passive:false});
     kb.appendChild(wrap);
   });
+  const br=document.createElement('div'); br.className='clear-bracket';
+  br.innerHTML='<span>CLEAR</span>'; kb.appendChild(br);
 }
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
@@ -843,40 +1047,452 @@ function buildKeyboard() {
 const keyById={};
 KEYS.forEach(k=>keyById[k.id]=k);
 
+// Every keystroke goes through one parser that assembles complete HP-11C
+// instructions (prefix + key + arguments). In run mode the instruction is executed;
+// in program mode (g P/R) it is stored as a program line, shown as key codes.
+
+const LETTERS = { sqrtx:'A', ex:'B', '10x':'C', yx:'D', '1x':'E' };
+const ARITH   = { add:'+', sub:'−', mul:'×', div:'÷' };
+const MAX_LINES = 203;
+const isDigit = id => id in DIGIT_IDS;
+
+// HP key codes: row digit + column digit (column 10 → 0); digit keys code as the digit
+const KEYCODE = {};
+(() => { let col=0,row=0; KEYS.forEach(k=>{
+  if (row===3 && col===5) col++;
+  KEYCODE[k.id] = isDigit(k.id) ? DIGIT_IDS[k.id] : String((row+1)*10 + (col+1)%10);
+  if (++col===10) { col=0; row++; }
+}); })();
+
+const MORE = { status:'more' }, BAD = { status:'bad' };
+
+function regArg(a) {                       // n, .n, I (TAN key), (i) (COS key)
+  if (!a.length) return MORE;
+  if (a[0]==='dot') {
+    if (a.length<2) return MORE;
+    return a.length===2 && isDigit(a[1]) ? { status:'done', v:'.'+DIGIT_IDS[a[1]] } : BAD;
+  }
+  if (a.length!==1) return BAD;
+  if (isDigit(a[0])) return { status:'done', v:DIGIT_IDS[a[0]] };
+  if (a[0]==='tan') return { status:'done', v:'I' };
+  if (a[0]==='cos') return { status:'done', v:'(i)' };
+  return BAD;
+}
+function labelArg(a, allowI=true) {        // 0–9, A–E, I (indirect)
+  if (!a.length) return MORE;
+  if (a.length!==1) return BAD;
+  if (isDigit(a[0])) return { status:'done', v:DIGIT_IDS[a[0]] };
+  if (a[0] in LETTERS) return { status:'done', v:LETTERS[a[0]] };
+  if (allowI && a[0]==='tan') return { status:'done', v:'I' };
+  return BAD;
+}
+
+// opts.stored: parsing a recorded program line (USER mode / editing don't apply)
+function parseKeys(keys, opts={}) {
+  const user = opts.stored ? false : S.user, prgm = opts.stored ? false : S.prgmMode;
+  let pref=null, i=0;
+  if (keys[0]==='f'||keys[0]==='g') { pref=keys[0]; i=1; }
+  if (i>=keys.length) return MORE;
+  const main=keys[i], a=keys.slice(i+1);
+  const done = (kind, extra={}) => ({ status:'done', op:{ kind, keys, ...extra } });
+  const edit = (cmd, extra={}) => ({ status:'done', op:{ kind:'edit', cmd, keys, ...extra } });
+  const withArg = (r, kind, field, extra={}) => r.status!=='done' ? r : done(kind, { ...extra, [field]:r.v });
+  const trig = inv => {
+    if (!a.length) return MORE;
+    return a.length===1 && ['sin','cos','tan'].includes(a[0]) ? done('hyp', { fn:a[0], inv }) : BAD;
+  };
+  const digitArg = (kind, extra) => {
+    if (!a.length) return MORE;
+    return a.length===1 && isDigit(a[0]) ? done(kind, { ...extra, n:+DIGIT_IDS[a[0]] }) : BAD;
+  };
+  const gsbLetter = () => ({ status:'done', op:{ kind:'gsb', label:LETTERS[main], keys:['gsb', main] } });
+
+  if (!pref) {
+    switch (main) {
+      case 'sto':
+        if (a[0] in ARITH) return withArg(regArg(a.slice(1)), 'sto', 'reg', { arith:a[0] });
+        return withArg(regArg(a), 'sto', 'reg', { arith:null });
+      case 'rcl':
+        if (a.length===1 && a[0]==='sigma') return done('rclsum');
+        return withArg(regArg(a), 'rcl', 'reg');
+      case 'gto':
+        if (a[0]==='dot') {                // GTO . nnn : move to a line (not programmable)
+          const d=a.slice(1);
+          if (!d.every(isDigit)) return BAD;
+          return d.length<3 ? MORE : edit('goline', { n:+d.map(k=>DIGIT_IDS[k]).join('') });
+        }
+        return withArg(labelArg(a), 'gto', 'label');
+      case 'gsb': return withArg(labelArg(a), 'gsb', 'label');
+      case 'sst': return edit('sst');
+      case 'on':  return edit('on');
+      case 'bsp': if (prgm) return edit('del'); break;
+    }
+    if (user && main in LETTERS) return gsbLetter();
+    return done('key', { pref:null, id:main });
+  }
+  if (pref==='f') {
+    if (main in LETTERS)                   // f A–E runs label A–E (USER mode swaps this)
+      return user ? { status:'done', op:{ kind:'key', pref:null, id:main, keys:[main] } } : gsbLetter();
+    switch (main) {
+      case 'sst':   return withArg(labelArg(a, false), 'lbl', 'label');
+      case 'gto':   return trig(false);                                     // HYP
+      case 'k7':    return digitArg('fmt', { mode:'FIX' });
+      case 'k8':    return digitArg('fmt', { mode:'SCI' });
+      case 'k9':    return digitArg('fmt', { mode:'ENG' });
+      case 'rdown': return edit('clearprgm');
+      case 'bsp':   return edit('noop');                                    // CLEAR PREFIX
+      case 'rcl':   return edit('user');
+    }
+    return done('key', { pref, id:main });
+  }
+  switch (main) {                          // g
+    case 'rs':  return edit('pr');
+    case 'sst': return edit('bst');
+    case 'gto': return trig(true);                                          // HYP⁻¹
+    case 'k4':  return digitArg('flag', { which:'SF' });
+    case 'k5':  return digitArg('flag', { which:'CF' });
+    case 'k6':  return digitArg('flag', { which:'F?' });
+    case 'rcl': return edit('mem');
+  }
+  return done('key', { pref, id:main });
+}
+
+const _opCache = new Map();
+function storedOp(line) {
+  const key=line.join(' ');
+  if (!_opCache.has(key)) {
+    const r=parseKeys(line, { stored:true });
+    _opCache.set(key, r.status==='done' ? r.op : { kind:'key', pref:null, id:'none' });
+  }
+  return _opCache.get(key);
+}
+
+// key codes of a program line, e.g. f LBL A → ["42","21","11"], STO . 1 → ["44",".1"]
+function codesOf(keys) {
+  const out=[];
+  for (let i=0;i<keys.length;i++) {
+    if (keys[i]==='dot' && i>0 && isDigit(keys[i+1])) { out.push('.'+DIGIT_IDS[keys[i+1]]); i++; }
+    else out.push(KEYCODE[keys[i]]);
+  }
+  return out;
+}
+
+// readable name of a key sequence, e.g. "LBL A", "STO + .1", "FIX 4"
+const MAIN_NAMES = { enter:'ENTER', '1x':'1/x', ex:'eˣ', '10x':'10ˣ', yx:'yˣ', dot:'.', sigma:'Σ+' };
+function mnemonic(keys) {
+  if (!keys.length) return '';
+  let i=0, pref=null;
+  if (keys[0]==='f'||keys[0]==='g') { pref=keys[0]; i=1; }
+  if (i>=keys.length) return pref;
+  const id=keys[i], k=keyById[id];
+  const name = pref==='f' ? k.fl : pref==='g' ? k.gl : (MAIN_NAMES[id] || k.m.replace(/<[^>]+>/g,''));
+  const trigArgs = id==='gto' && pref;
+  const toks=[];
+  const args=keys.slice(i+1);
+  for (let j=0;j<args.length;j++) {
+    const a=args[j];
+    if (a==='dot') { let s='.'; while (isDigit(args[j+1])) s+=DIGIT_IDS[args[++j]]; toks.push(s); }
+    else if (isDigit(a)) toks.push(DIGIT_IDS[a]);
+    else if (a in ARITH) toks.push(ARITH[a]);
+    else if (trigArgs) toks.push(keyById[a].m);
+    else if (a in LETTERS) toks.push(LETTERS[a]);
+    else if (a==='tan') toks.push('I');
+    else if (a==='cos') toks.push('(i)');
+    else if (a==='sigma') toks.push('Σ+');
+    else toks.push(keyById[a]?.m.replace(/<[^>]+>/g,'') || a);
+  }
+  return [name, ...toks].join(' ');
+}
+
+// ── Keystrokes ──────────────────────────────────────────────────────────────
+
 function pressKey(id) {
   const k=keyById[id]; if (!k) return;
 
   const el=document.querySelector(`.key[data-id="${id}"] .kf`);
   if (el) { el.parentElement.classList.add('pressed'); setTimeout(()=>el.parentElement.classList.remove('pressed'),120); }
 
-  if (id==='f'||id==='g') { k.a(); return; }
+  if (S.running) { stopProgram(); return; }        // any key halts a running program
 
-  // FMT mode (FIX/SCI/ENG attend un chiffre)
-  if (S.fmtMode!==null) {
-    if (handleFmtMode(id)) return;
+  if (id==='f'||id==='g') {                        // prefix keys: set, switch or cancel
+    const p=S.pending;
+    if (!p.length) S.pending=[id];
+    else if (p.length===1 && (p[0]==='f'||p[0]==='g')) S.pending = p[0]===id ? [] : [id];
+    showPending(); return;
   }
 
-  // STO/RCL mode intercepts most keys
-  if (S.stoMode!==null) {
-    if (handleStoMode(id)) return;
-  }
+  let keys=[...S.pending, id];
+  let r=parseKeys(keys);
+  if (r.status==='bad' && S.pending.length) { keys=[id]; r=parseKeys(keys); }   // invalid: drop the prefix
+  if (r.status==='more') { S.pending=keys; showPending(); return; }
+  S.pending=[]; showPending();
+  if (r.status!=='done') return;
 
-  const shift=S.shift; S.shift=null; refreshAnn();
-
-  if (shift==='f' && k.fa) k.fa();
-  else if (shift==='g' && k.ga) k.ga();
-  else if (k.a) k.a();
+  const op=r.op;
+  if (op.kind==='edit') doEdit(op);
+  else if (S.prgmMode) recordOp(op);
+  else runKeyboardOp(op);
 }
+
+function showPending() {
+  const p=S.pending;
+  S.shift = (p[0]==='f'||p[0]==='g') ? p[0] : null;
+  refreshAnn(); refreshModeDisplay();
+  const main = S.shift ? p[1] : p[0];
+  document.querySelector('.key[data-id="sto"]')?.classList.toggle('sto-pending', main==='sto');
+  document.querySelector('.key[data-id="rcl"]')?.classList.toggle('rcl-pending', main==='rcl');
+}
+
+// ── Program editing (g P/R) ──────────────────────────────────────────────────
+
+function recordOp(op) {
+  if (S.prgm.length>=MAX_LINES) { flashError(); return; }
+  S.prgm.splice(S.pc, 0, op.keys);
+  S.pc++;
+  refreshDisplay();
+}
+
+function doEdit(op) {
+  const len=S.prgm.length;
+  switch (op.cmd) {
+    case 'pr':        finishEntry(); S.prgmMode=!S.prgmMode; S.retStack=[]; break;
+    case 'sst':       if (!S.prgmMode) { stepOnce(); return; } S.pc=(S.pc+1)%(len+1); break;
+    case 'bst':       S.pc=(S.pc+len)%(len+1); break;
+    case 'del':       if (S.pc>0) { S.prgm.splice(S.pc-1,1); S.pc--; } break;
+    case 'clearprgm': if (S.prgmMode) S.prgm=[]; S.pc=0; S.retStack=[]; break;
+    case 'goline':    if (op.n>len) { flashError(); return; } S.pc=op.n; break;
+    case 'user':      S.user=!S.user; break;
+    case 'mem':       showMessage('P-'+String(MAX_LINES-len).padStart(3,'0')+' r-.9'); return;
+    case 'on':        stopProgram(); powerOn(); return;
+    case 'noop':      break;
+  }
+  refreshAnn(); refreshDisplay();
+}
+
+function showMessage(text) {
+  renderRaw(text);
+  clearTimeout(S.msgTimer); S.msgTimer=setTimeout(refreshDisplay, 1500);
+}
+
+// "001-42,21,11": line number, then up to three key codes right-aligned
+function renderPrgmLine() {
+  const cell=(ch,p=null)=>({ ch, p });
+  const cells=[...String(S.pc).padStart(3,'0')].map(c=>cell(c));
+  cells.push(cell('-'));
+  if (S.pc>0) {
+    const parts=codesOf(S.prgm[S.pc-1]).map(c =>
+      c[0]==='.' ? [cell(' ','.'), cell(c[1])] : c.length===1 ? [cell(' '), cell(c)] : [cell(c[0]), cell(c[1])]);
+    if (parts.length===3) { parts[0][1].p=','; parts[1][1].p=','; }      // 42,21,11
+    else if (parts.length===2) parts.splice(1, 0, [cell(' ')]);           //  43 11
+    const flat=parts.flat();
+    while (cells.length+flat.length<10) cells.push(cell(' '));
+    cells.push(...flat);
+  }
+  while (cells.length<10) cells.push(cell(' '));
+  _drawCells({ neg:false, cells:cells.slice(0,10) });
+}
+
+function renderListing() {
+  const box=document.getElementById('sp-prog'); if (!box) return;
+  document.getElementById('sp-prg-count').textContent = S.prgm.length ? `(${S.prgm.length}/${MAX_LINES})` : '';
+  const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  if (!S.prgm.length) { box.innerHTML='<div class="sp-prog-empty">vide — g P/R pour programmer</div>'; return; }
+  let html=`<div class="sp-prog-row${S.pc===0?' cur':''}" data-n="0"><span class="n">000</span><span class="c"></span><span class="m"></span></div>`;
+  S.prgm.forEach((line,i)=>{
+    const n=i+1;
+    html+=`<div class="sp-prog-row${S.pc===n?' cur':''}" data-n="${n}"><span class="n">${String(n).padStart(3,'0')}</span>`+
+          `<span class="c">${codesOf(line).join(',')}</span><span class="m">${esc(mnemonic(line))}</span></div>`;
+  });
+  box.innerHTML=html;
+  if (S.prgmMode) box.querySelector('.cur')?.scrollIntoView({ block:'nearest' });
+}
+document.getElementById('sp-prog').addEventListener('mousedown', e => {
+  const row=e.target.closest('.sp-prog-row'); if (!row || S.running) return;
+  S.pc=+row.dataset.n; refreshDisplay();
+});
+
+// ── Execution ───────────────────────────────────────────────────────────────
+
+function runKeyboardOp(op) {
+  switch (op.kind) {
+    case 'gsb': S.retStack=[]; if (gotoLabel(op.label)) startProgram(); return;
+    case 'gto': gotoLabel(op.label); refreshDisplay(); return;
+    case 'key':
+      if (!op.pref && op.id==='rs') { finishEntry(); startProgram(); return; }   // R/S
+      if (op.pref==='g' && op.id==='gsb') { S.pc=0; S.retStack=[]; return; }    // RTN: back to 000
+  }
+  execOp(op, false);
+}
+
+const TESTS = {
+  'f:div':(x,y)=>x<=y, 'g:div':x=>x<0,  'f:mul':(x,y)=>x>y,  'g:mul':x=>x>0,
+  'f:sub':(x,y)=>x!==y, 'g:sub':x=>x!==0, 'f:add':(x,y)=>x===y, 'g:add':x=>x===0,
+};
+
+function execOp(op, running) {
+  switch (op.kind) {
+    case 'key': return execKey(op.pref, op.id, running);
+    case 'sto': {
+      finishEntry(); const r=resolveReg(op.reg); if (!r) return flashError();
+      return executeStorageOp(op.arith ? 'sto'+{add:'+',sub:'-',mul:'*',div:'/'}[op.arith] : 'sto', r);
+    }
+    case 'rcl': {
+      finishEntry(); const r=resolveReg(op.reg); if (!r) return flashError();
+      return executeStorageOp('rcl', r);
+    }
+    case 'rclsum': return statPair(()=>[R(1), R(3)]);
+    case 'lbl':    return;
+    case 'gto':    gotoLabel(op.label); return;
+    case 'gsb':
+      if (S.retStack.length>=4) return flashError();
+      S.retStack.push(S.pc);
+      if (!gotoLabel(op.label)) S.retStack.pop();
+      return;
+    case 'fmt':  S.displayMode=op.mode; S.displayDigits=op.n; refreshDisplay(); return;
+    case 'hyp': {
+      const f = op.inv ? { sin:Math.asinh, cos:Math.acosh, tan:Math.atanh }[op.fn]
+                       : { sin:Math.sinh,  cos:Math.cosh,  tan:Math.tanh  }[op.fn];
+      return unaryOp(f);
+    }
+    case 'flag':
+      if (op.which==='SF') S.flags[op.n]=true;
+      else if (op.which==='CF') S.flags[op.n]=false;
+      else if (running && !S.flags[op.n]) S.pc++;          // F? false → skip next line
+      return;
+  }
+}
+
+function execKey(pref, id, running) {
+  const name=(pref?pref+':':'')+id;
+  if (name in TESTS) {                                     // conditional: skip next line if false
+    finishEntry(); S.liftEnabled=true;
+    if (running && !TESTS[name](x(), y())) S.pc++;
+    return;
+  }
+  switch (name) {
+    case 'rs':    if (running) stopProgram(); return;                     // R/S in a program
+    case 'f:rs':  if (running) pauseProgram(); return;                    // PSE
+    case 'g:gsb':                                                         // RTN
+      if (running) { if (S.retStack.length) S.pc=S.retStack.pop(); else { S.pc=0; stopProgram(); } }
+      return;
+    case 'f:k5':  return loopCounter(-1, running);                        // DSE
+    case 'f:k6':  return loopCounter(+1, running);                        // ISG
+  }
+  const k=keyById[id]; if (!k) return;
+  const fn = pref==='f' ? k.fa : pref==='g' ? k.ga : k.a;
+  if (fn) fn();
+}
+
+// DSE / ISG on I = nnnnn.xxxyy : counter n, goal xxx, step yy (0 → 1)
+function loopCounter(dir, running) {
+  finishEntry();
+  const v=S.mem.I ?? 0, n=Math.trunc(v);
+  const fs=(Math.abs(v)%1).toFixed(5).slice(2);
+  const goal=+fs.slice(0,3), step=+fs.slice(3,5) || 1;
+  const nn=n+dir*step;
+  S.mem.I = nn<0 ? nn-(+('0.'+fs)) : nn+(+('0.'+fs));
+  const skip = dir<0 ? nn<=goal : nn>goal;
+  if (running && skip) S.pc++;
+  updateSidePanel();
+}
+
+// label 0–9 / A–E, or I: 0–9 → label, 10–14 → A–E, negative → line |I|
+function gotoLabel(label) {
+  const len=S.prgm.length;
+  if (label==='I') {
+    const v=Math.trunc(S.mem.I ?? 0);
+    if (v<0) { if (-v>len) { flashError(); return false; } S.pc=-v; return true; }
+    label = v<=9 ? String(v) : v<=14 ? 'ABCDE'[v-10] : null;
+    if (label===null) { flashError(); return false; }
+  }
+  for (let k=0;k<len;k++) {                                // search downward from here, wrapping
+    const j=(S.pc+k)%len, op=storedOp(S.prgm[j]);
+    if (op.kind==='lbl' && op.label===label) { S.pc=j+1; return true; }
+  }
+  flashError(); return false;
+}
+
+function startProgram() {
+  if (!S.prgm.length) return;
+  S.running=true; S.pausing=false; S.err=false;
+  startBlink(); setTimeout(tick, 0);
+}
+
+function tick() {
+  if (!S.running || S.pausing) return;
+  for (let n=0;n<250;n++) if (!step()) return;             // run in slices, keep the UI alive
+  setTimeout(tick, 0);
+}
+
+function step() {
+  if (S.pc>=S.prgm.length) {                               // past the last line = RTN
+    if (S.retStack.length) { S.pc=S.retStack.pop(); return true; }
+    S.pc=0; stopProgram(); return false;
+  }
+  const op=storedOp(S.prgm[S.pc]); S.pc++;
+  S.err=false;
+  execOp(op, true);
+  if (S.err) { stopProgram(true); return false; }
+  return S.running && !S.pausing;
+}
+
+// SST in run mode: execute the next line only
+function stepOnce() {
+  if (!S.prgm.length) return;
+  if (S.pc>=S.prgm.length) S.pc=0;
+  const op=storedOp(S.prgm[S.pc]); S.pc++;
+  S.running=true; S.err=false;
+  execOp(op, true);
+  S.running=false; S.pausing=false;
+  if (!S.err) refreshDisplay();
+}
+
+function stopProgram(err=false) {
+  if (!S.running) return;
+  S.running=false; S.pausing=false; stopBlink();
+  if (S.entering) { finishEntry(); S.liftEnabled=true; }   // a stop ends digit entry
+  if (err) { renderDisplay('Error'); updateSidePanel(); } else refreshDisplay();
+  refreshAnn();
+}
+
+function pauseProgram() {                                  // PSE: show X for about a second
+  if (S.entering) { finishEntry(); S.liftEnabled=true; }   // PSE ends digit entry
+  S.pausing=true; stopBlink(); refreshDisplay();
+  setTimeout(() => { if (!S.running) return; S.pausing=false; startBlink(); tick(); }, 1000);
+}
+
+function startBlink() {
+  stopBlink(); let on=true; renderRaw('running');
+  S.blink=setInterval(() => { on=!on; renderRaw(on ? 'running' : ''); }, 350);
+}
+function stopBlink() { clearInterval(S.blink); S.blink=null; }
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 
 const KB = {
   '0':'k0','1':'k1','2':'k2','3':'k3','4':'k4','5':'k5','6':'k6','7':'k7','8':'k8','9':'k9',
   '.':'dot','+':'add','-':'sub','*':'mul','/':'div','^':'yx',
-  'Enter':'enter','Backspace':'bsp','e':'eex','E':'eex','c':'chs','C':'chs',
+  'Enter':'enter','Backspace':'bsp','E':'eex','C':'chs',
+  'a':'sqrtx','b':'ex','c':'10x','d':'yx','e':'1x','f':'f','g':'g',
 };
 
+// Standalone app: pressing anywhere outside the keys and the side panel moves the window
+if (window.webkit?.messageHandlers?.drag) {
+  document.addEventListener('mousedown', e => {
+    if (e.button !== 0 || e.target.closest('.key, .side-panel')) return;
+    window.webkit.messageHandlers.drag.postMessage(null);
+  });
+}
+
+window.addEventListener('pagehide', saveState);
+
+// Hold Tab to see which computer keys drive which HP keys
+const setHints = on => document.documentElement.classList.toggle('show-hints', on);
+document.addEventListener('keyup', e => { if (e.key==='Tab') setHints(false); });
+window.addEventListener('blur', () => setHints(false));
+
 document.addEventListener('keydown',e=>{
+  if (e.key==='Tab') { e.preventDefault(); setHints(true); return; }
   if (e.ctrlKey||e.metaKey||e.altKey) return;
   const id=KB[e.key]; if (!id) return;
   e.preventDefault(); pressKey(id); showTip(e.key);
@@ -884,7 +1500,7 @@ document.addEventListener('keydown',e=>{
 
 let tipTimer;
 function showTip(k) {
-  const L={'Enter':'ENTER','Backspace':'← efface','+':'Addition','-':'Soustraction','*':'Multiplication','/':'Division','^':'yˣ','e':'EEX','c':'CHS','C':'CHS'};
+  const L={'Enter':'ENTER','Backspace':'← efface','+':'Addition','-':'Soustraction','*':'Multiplication','/':'Division','^':'yˣ','E':'EEX','C':'CHS','a':'A','b':'B','c':'C','d':'D','e':'E'};
   const tip=document.getElementById('tooltip');
   tip.textContent=L[k]||k; tip.classList.add('show');
   clearTimeout(tipTimer); tipTimer=setTimeout(()=>tip.classList.remove('show'),1000);
@@ -898,7 +1514,7 @@ refreshModeDisplay();
 // render après layout pour que le canvas ait ses dimensions CSS
 requestAnimationFrame(() => {
   refreshDisplay();
-  new ResizeObserver(() => renderDisplay(_displayStr))
+    new ResizeObserver(_redraw)
     .observe(document.getElementById('display-canvas'));
 });
 </script>
